@@ -28,7 +28,7 @@ const Viewer = () => {
   }, []);
 
   const connectToServer = () => {
-    const wsUrl = `ws://localhost:5000`;
+    const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:5000';
     addLog('🔌 Connexion au serveur...');
     
     webSocketRef.current = new WebSocket(wsUrl);

@@ -8,12 +8,17 @@ function App() {
 
   return (
     <div className="App">
+      <header className="app-header">
+        <h1>🎥 WebRTC Multi-Streaming</h1>
+        <p className="app-subtitle">Stream et regardez plusieurs vidéos en direct simultanément</p>
+      </header>
+      
       <div className="mode-selector">
         <button
           className={`mode-button ${mode === 'viewer' ? 'active' : ''}`}
           onClick={() => setMode('viewer')}
         >
-          👁️ Mode Viewer
+          👁️ Mode Spectateur (Multi-Stream)
         </button>
         <button
           className={`mode-button ${mode === 'streamer' ? 'active' : ''}`}
@@ -23,18 +28,24 @@ function App() {
         </button>
       </div>
       
-      {mode === 'viewer' ? <Viewer /> : <Streamer />}
+      <div className="content-wrapper">
+        {mode === 'viewer' ? <Viewer /> : <Streamer />}
+      </div>
       
       <div className="info-panel">
-        <h4>ℹ️ Comment ça marche:</h4>
+        <h4>ℹ️ Comment ça marche :</h4>
         <p>
-          <strong>Mode Streamer:</strong> Partagez votre caméra/micro en direct
+          <strong>Mode Streamer :</strong> Partagez votre caméra/micro en direct (1 stream max)
           <br />
-          <strong>Mode Viewer:</strong> Regardez les streams disponibles
+          <strong>Mode Spectateur :</strong> Regardez TOUS les streams disponibles simultanément
           <br />
-          <small>Utilisez Chrome/Firefox pour une meilleure compatibilité WebRTC</small>
+          <small>Les streams s'affichent automatiquement quand un streamer se connecte</small>
         </p>
       </div>
+      
+      <footer className="app-footer">
+        <p>WebRTC Multi-Streaming • Tous les streams sont P2P • Aucun serveur vidéo</p>
+      </footer>
     </div>
   );
 }

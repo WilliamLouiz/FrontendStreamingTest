@@ -2,13 +2,13 @@ import React, { useRef, useState, useEffect } from 'react';
 import './styles/Viewer.css';
 
 const Viewer = () => {
-  const remoteVideoRef = useRef(null);
-  const peerConnectionRef = useRef(null);
+  const peerConnectionsRef = useRef(new Map());
   const webSocketRef = useRef(null);
+  const videoElementsRef = useRef(new Map());
   
   const [status, setStatus] = useState('disconnected');
   const [availableStreams, setAvailableStreams] = useState([]);
-  const [selectedStream, setSelectedStream] = useState(null);
+  const [activeStreams, setActiveStreams] = useState(new Map()); // streamId -> { videoRef, peerConnection, broadcasterId }
   const [logs, setLogs] = useState([]);
   const [clientId, setClientId] = useState('');
 
@@ -47,46 +47,53 @@ const Viewer = () => {
           setClientId(message.clientId);
           addLog(`✅ ID client: ${message.clientId}`);
           setAvailableStreams(message.availableStreams || []);
+          // Rejoindre automatiquement tous les streams disponibles
+          message.availableStreams.forEach(streamId => {
+            setTimeout(() => joinStream(streamId), 500);
+          });
           break;
           
         case 'stream-joined':
           addLog(`✅ Connecté au stream: ${message.streamId}`);
-          setSelectedStream(message.streamId);
-          setStatus('joining');
+          setStatus('connected');
           break;
           
         case 'offer':
-          handleOffer(message.senderId, message.sdp);
-          break;
-          
-        case 'answer':
-          addLog('✅ Answer reçue');
+          handleOffer(message.senderId, message.streamId, message.sdp);
           break;
           
         case 'ice-candidate':
-          handleIceCandidate(message.candidate);
+          handleIceCandidate(message.senderId, message.candidate);
           break;
           
         case 'streams-list':
-          setAvailableStreams(message.streams.map(s => s.id));
+          const newStreams = message.streams.map(s => s.id);
+          setAvailableStreams(newStreams);
+          
+          // Rejoindre les nouveaux streams
+          newStreams.forEach(streamId => {
+            if (!activeStreams.has(streamId)) {
+              setTimeout(() => joinStream(streamId), 300);
+            }
+          });
           break;
           
         case 'stream-added':
           addLog(`🎉 Nouveau stream disponible: ${message.streamId}`);
           setAvailableStreams(prev => [...prev, message.streamId]);
+          // Rejoindre automatiquement le nouveau stream
+          setTimeout(() => joinStream(message.streamId), 500);
           break;
           
         case 'stream-removed':
           addLog(`🗑️ Stream terminé: ${message.streamId}`);
           setAvailableStreams(prev => prev.filter(id => id !== message.streamId));
-          if (selectedStream === message.streamId) {
-            handleStreamEnded();
-          }
+          handleStreamEnded(message.streamId);
           break;
           
         case 'stream-ended':
           addLog('📡 Stream terminé par le broadcaster');
-          handleStreamEnded();
+          handleStreamEnded(message.streamId);
           break;
       }
     };
@@ -106,10 +113,9 @@ const Viewer = () => {
   };
 
   const joinStream = (streamId) => {
-    if (!streamId) return;
+    if (!streamId || activeStreams.has(streamId)) return;
     
     addLog(`🔄 Tentative de rejoindre: ${streamId}`);
-    setStatus('connecting');
     
     webSocketRef.current.send(JSON.stringify({
       type: 'join-stream',
@@ -117,9 +123,9 @@ const Viewer = () => {
     }));
   };
 
-  const handleOffer = async (broadcasterId, sdp) => {
+  const handleOffer = async (broadcasterId, streamId, sdp) => {
     try {
-      addLog('📨 Réception de l\'offre...');
+      addLog(`📨 Réception offre pour ${streamId}...`);
       
       // Configurer WebRTC
       const config = {
@@ -129,24 +135,29 @@ const Viewer = () => {
         ]
       };
       
-      peerConnectionRef.current = new RTCPeerConnection(config);
+      const peerConnection = new RTCPeerConnection(config);
+      
+      // Créer une référence vidéo pour ce stream
+      const videoId = `video-${streamId}`;
       
       // Gérer les tracks reçues
-      peerConnectionRef.current.ontrack = (event) => {
-        addLog(`🎬 Réception vidéo/audio`);
+      peerConnection.ontrack = (event) => {
+        addLog(`🎬 Réception vidéo pour ${streamId}`);
         if (event.streams && event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-          remoteVideoRef.current.play()
-            .then(() => {
-              addLog('▶️ Lecture démarrée');
-              setStatus('streaming');
-            })
-            .catch(err => addLog(`❌ Erreur lecture: ${err.message}`));
+          const videoElement = document.getElementById(videoId);
+          if (videoElement) {
+            videoElement.srcObject = event.streams[0];
+            videoElement.play()
+              .then(() => {
+                addLog(`▶️ Lecture démarrée pour ${streamId}`);
+              })
+              .catch(err => addLog(`❌ Erreur lecture ${streamId}: ${err.message}`));
+          }
         }
       };
       
       // Gérer les candidats ICE
-      peerConnectionRef.current.onicecandidate = (event) => {
+      peerConnection.onicecandidate = (event) => {
         if (event.candidate && webSocketRef.current?.readyState === WebSocket.OPEN) {
           webSocketRef.current.send(JSON.stringify({
             type: 'ice-candidate',
@@ -157,23 +168,23 @@ const Viewer = () => {
       };
       
       // Gérer les changements d'état
-      peerConnectionRef.current.oniceconnectionstatechange = () => {
-        const state = peerConnectionRef.current.iceConnectionState;
-        addLog(`🧊 État ICE: ${state}`);
+      peerConnection.oniceconnectionstatechange = () => {
+        const state = peerConnection.iceConnectionState;
+        addLog(`🧊 ${streamId} État ICE: ${state}`);
         
         if (state === 'disconnected' || state === 'failed') {
-          addLog('🔌 Connexion perdue');
-          setStatus('disconnected');
+          addLog(`🔌 Connexion perdue pour ${streamId}`);
+          handleStreamEnded(streamId);
         }
       };
       
       // Configurer l'offre
-      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
-      addLog('✅ Remote description configurée');
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
+      addLog(`✅ Remote description configurée pour ${streamId}`);
       
       // Créer et envoyer la réponse
-      const answer = await peerConnectionRef.current.createAnswer();
-      await peerConnectionRef.current.setLocalDescription(answer);
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
       
       webSocketRef.current.send(JSON.stringify({
         type: 'answer',
@@ -181,122 +192,191 @@ const Viewer = () => {
         sdp: answer
       }));
       
-      addLog('📤 Réponse envoyée');
+      addLog(`📤 Réponse envoyée pour ${streamId}`);
+      
+      // Stocker la connexion
+      peerConnectionsRef.current.set(streamId, peerConnection);
+      
+      // Mettre à jour l'état des streams actifs
+      setActiveStreams(prev => new Map(prev.set(streamId, {
+        peerConnection,
+        broadcasterId,
+        joinedAt: new Date()
+      })));
       
     } catch (err) {
-      addLog(`❌ Erreur traitement offre: ${err.message}`);
-      setStatus('error');
+      addLog(`❌ Erreur traitement offre ${streamId}: ${err.message}`);
     }
   };
 
-  const handleIceCandidate = async (candidate) => {
+  const handleIceCandidate = async (broadcasterId, candidate) => {
     try {
-      if (peerConnectionRef.current && candidate) {
-        await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      // Trouver la peerConnection correspondante
+      let targetPc = null;
+      let targetStreamId = null;
+      
+      activeStreams.forEach((streamInfo, streamId) => {
+        if (streamInfo.broadcasterId === broadcasterId) {
+          targetPc = streamInfo.peerConnection;
+          targetStreamId = streamId;
+        }
+      });
+      
+      if (targetPc && candidate) {
+        await targetPc.addIceCandidate(new RTCIceCandidate(candidate));
       }
     } catch (err) {
       console.error('ICE error:', err);
     }
   };
 
-  const handleStreamEnded = () => {
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
+  const handleStreamEnded = (streamId) => {
+    const pc = peerConnectionsRef.current.get(streamId);
+    if (pc) {
+      pc.close();
+      peerConnectionsRef.current.delete(streamId);
     }
     
-    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
-      remoteVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      remoteVideoRef.current.srcObject = null;
+    const videoElement = document.getElementById(`video-${streamId}`);
+    if (videoElement && videoElement.srcObject) {
+      videoElement.srcObject.getTracks().forEach(track => track.stop());
+      videoElement.srcObject = null;
     }
     
-    setSelectedStream(null);
-    setStatus('connected');
-    addLog('🔌 Déconnecté du stream');
+    setActiveStreams(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(streamId);
+      return newMap;
+    });
+    
+    addLog(`🔌 Déconnecté du stream ${streamId}`);
   };
 
-  const leaveStream = () => {
-    handleStreamEnded();
-    
-    if (webSocketRef.current?.readyState === WebSocket.OPEN) {
-      webSocketRef.current.send(JSON.stringify({
-        type: 'leave-stream'
-      }));
-    }
+  const leaveAllStreams = () => {
+    activeStreams.forEach((_, streamId) => {
+      handleStreamEnded(streamId);
+      
+      if (webSocketRef.current?.readyState === WebSocket.OPEN) {
+        webSocketRef.current.send(JSON.stringify({
+          type: 'leave-stream'
+        }));
+      }
+    });
     
     requestStreamsList();
   };
 
   const cleanup = () => {
-    handleStreamEnded();
+    leaveAllStreams();
     if (webSocketRef.current) {
       webSocketRef.current.close();
     }
   };
 
+  const togglePlay = (streamId) => {
+    const videoElement = document.getElementById(`video-${streamId}`);
+    if (videoElement) {
+      if (videoElement.paused) {
+        videoElement.play().catch(err => console.error('Play error:', err));
+      } else {
+        videoElement.pause();
+      }
+    }
+  };
+
   return (
     <div className="viewer-container">
-      <h1>👁️ WebRTC Viewer</h1>
+      <h1>👁️ WebRTC Multi-Stream Viewer</h1>
       
       <div className="control-panel">
         <div className="status-indicator">
           <span className={`status-dot ${status}`}></span>
           <span>Statut: <strong>{status.toUpperCase()}</strong></span>
-          {selectedStream && <span className="stream-id">Stream: {selectedStream}</span>}
+          <span className="stream-count">📊 Streams actifs: {activeStreams.size}</span>
         </div>
         
-        {status === 'connected' && (
-          <div className="streams-list">
-            <h3>Streams Disponibles:</h3>
-            {availableStreams.length === 0 ? (
-              <p className="no-streams">Aucun stream actif</p>
-            ) : (
-              <div className="streams-grid">
-                {availableStreams.map((streamId) => (
-                  <div key={streamId} className="stream-card">
-                    <div className="stream-info">
-                      <h4>{streamId}</h4>
-                      <p>Stream en direct</p>
-                    </div>
-                    <button
-                      onClick={() => joinStream(streamId)}
-                      className="join-button"
+        <div className="stream-controls">
+          <button onClick={requestStreamsList} className="refresh-button">
+            🔄 Actualiser les streams
+          </button>
+          <button onClick={leaveAllStreams} className="leave-button">
+            🚪 Quitter tous les streams
+          </button>
+        </div>
+      </div>
+      
+      <div className="streams-grid-container">
+        <h3>Streams en Direct ({activeStreams.size}) :</h3>
+        
+        {activeStreams.size === 0 ? (
+          <div className="no-streams">
+            <p>⏳ Aucun stream actif pour le moment...</p>
+            <p>Les streams apparaîtront automatiquement quand un streamer se connectera.</p>
+          </div>
+        ) : (
+          <div className="streams-grid">
+            {Array.from(activeStreams.entries()).map(([streamId, streamInfo]) => (
+              <div key={streamId} className="stream-card">
+                <div className="stream-header">
+                  <h4>📡 {streamId}</h4>
+                  <span className="stream-status">● EN DIRECT</span>
+                </div>
+                
+                <div className="video-wrapper">
+                  <video
+                    id={`video-${streamId}`}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="stream-video"
+                  />
+                  <div className="video-controls">
+                    <button 
+                      onClick={() => togglePlay(streamId)}
+                      className="play-button"
                     >
-                      👁️ Regarder
+                      ⏯️
+                    </button>
+                    <button 
+                      onClick={() => handleStreamEnded(streamId)}
+                      className="close-button"
+                    >
+                      ✖️
                     </button>
                   </div>
-                ))}
+                </div>
+                
+                <div className="stream-info">
+                  <p>👤 Streamer: {streamInfo.broadcasterId?.substring(0, 8)}...</p>
+                  <p>🕒 Connecté à: {streamInfo.joinedAt?.toLocaleTimeString()}</p>
+                </div>
               </div>
-            )}
-            <button onClick={requestStreamsList} className="refresh-button">
-              🔄 Actualiser
-            </button>
+            ))}
           </div>
-        )}
-        
-        {selectedStream && status !== 'connected' && (
-          <button onClick={leaveStream} className="leave-button">
-            🚪 Quitter le Stream
-          </button>
         )}
       </div>
       
-      <div className="video-container">
-        <div className="remote-video">
-          <h3>Stream Live:</h3>
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            controls
-            className="video-player"
-          />
-          {status === 'streaming' && (
-            <div className="stream-info">
-              <p>📡 En streaming depuis: {selectedStream}</p>
-            </div>
-          )}
-        </div>
+      <div className="available-streams">
+        <h3>Streams Disponibles ({availableStreams.length}) :</h3>
+        {availableStreams.length > 0 && (
+          <div className="streams-list">
+            {availableStreams.map((streamId) => (
+              <div key={streamId} className="available-stream-item">
+                <span>{streamId}</span>
+                {activeStreams.has(streamId) ? (
+                  <span className="status-connected">✅ Connecté</span>
+                ) : (
+                  <button 
+                    onClick={() => joinStream(streamId)}
+                    className="connect-button"
+                  >
+                    🔗 Connecter
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       <div className="logs-panel">

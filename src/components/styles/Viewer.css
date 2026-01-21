@@ -1,4 +1,5 @@
 .viewer-container {
+  cursor: pointer;
   min-height: 100vh;
   background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
   color: #e2e8f0;
@@ -572,4 +573,204 @@
   .stream-status {
     align-self: flex-end;
   }
+}
+
+.status-dot.paused {
+  background: #ed8936;
+  animation: none;
+}
+
+.stream-video {
+  background: #000;
+}
+
+.video-wrapper.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f56565;
+  font-weight: bold;
+}
+
+.empty-state .btn-primary {
+  margin-top: 20px;
+}
+
+/* Message d'auto-play */
+.auto-play-message {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  text-align: center;
+  z-index: 10;
+}
+
+/* Pour les mobiles */
+@media (hover: none) {
+  .video-controls {
+    opacity: 1 !important; /* Toujours visible sur mobile */
+  }
+}
+
+.track-info {
+  font-size: 0.8em;
+  color: #90cdf4;
+  margin-top: 5px;
+}
+
+.status-dot.buffering {
+  background: #ed8936;
+  animation: pulse 1.5s infinite;
+}
+
+.stream-status-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-play-small {
+  background: #48bb78;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.8em;
+  cursor: pointer;
+}
+
+.btn-play-small:hover {
+  background: #38a169;
+}
+
+.control-btn:nth-child(4) { /* Bouton redémarrer */
+  background: rgba(66, 153, 225, 0.8);
+}
+
+.control-btn:nth-child(4):hover {
+  background: rgba(66, 153, 225, 1);
+}
+
+.video-controls.visible {
+  opacity: 1;
+}
+
+/* Toujours montrer les contrôles quand la vidéo est en pause */
+.video-wrapper:hover .video-controls,
+.video-wrapper.paused .video-controls {
+  opacity: 1;
+}
+
+.btn-activate {
+  background: #48bb78;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  animation: pulse-glow 2s infinite;
+}
+
+.btn-activate:hover {
+  background: #38a169;
+  transform: scale(1.05);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px #48bb78;
+  }
+  50% { 
+    box-shadow: 0 0 20px #48bb78, 0 0 30px #48bb78;
+  }
+}
+
+/* Overlay play button */
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.3s;
+  z-index: 5;
+}
+
+.play-overlay:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.play-icon {
+  font-size: 4em;
+  margin-bottom: 10px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.play-overlay p {
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Status dots */
+.status-dot.ready {
+  background: #4299e1;
+  animation: pulse 1.5s infinite;
+}
+
+.status-dot.live {
+  background: #48bb78;
+  animation: pulse 1s infinite;
+}
+
+.status-dot.connecting {
+  background: #ed8936;
+  animation: pulse 2s infinite;
+}
+
+/* Toujours montrer les contrôles sur mobile */
+@media (max-width: 768px) {
+  .video-controls {
+    opacity: 1 !important;
+  }
+  
+  .play-overlay {
+    opacity: 1;
+  }
+}
+
+/* Message d'instruction */
+.instruction-banner {
+  background: linear-gradient(135deg, #4299e1, #667eea);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+  border-radius: 8px;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

@@ -6,7 +6,7 @@ const Streamer = () => {
     const peerConnectionsRef = useRef(new Map());
     const webSocketRef = useRef(null);
     const localStreamRef = useRef(null);
-
+    const pendingViewersRef = useRef(new Set());
     const [status, setStatus] = useState('disconnected');
     const [streamId, setStreamId] = useState('');
     const [viewers, setViewers] = useState(0);
@@ -58,7 +58,7 @@ const Streamer = () => {
                 case 'viewer-joined':
                     addLog(`👁️ Nouveau viewer: ${message.viewerId}`);
                     setViewers(message.viewerCount);
-                    handleNewViewer(message.viewerId, message.streamId); 
+                    handleNewViewer(message.viewerId, message.streamId);
                     break;
 
                 case 'viewer-left':
@@ -116,6 +116,11 @@ const Streamer = () => {
             localStreamRef.current = stream;
             localVideoRef.current.srcObject = stream;
 
+            pendingViewersRef.current.forEach(viewerId => {
+                handleNewViewer(viewerId, streamId);
+            });
+            pendingViewersRef.current.clear();
+
             addLog('✅ Camera et micro activés');
 
             // Créer le stream sur le serveur
@@ -135,6 +140,7 @@ const Streamer = () => {
     };
 
     const handleNewViewer = (viewerId, streamId) => {
+        addLog(`📤 Création offer pour ${viewerId}`);
         addLog(`🔄 Création connexion pour ${viewerId} sur ${streamId}`);
 
         const config = {
@@ -153,7 +159,8 @@ const Streamer = () => {
                 peerConnection.addTrack(track, localStreamRef.current);
             });
         } else {
-            addLog('❌ Aucun flux local disponible');
+            addLog(`⏳ Flux pas prêt, mise en attente de ${viewerId}`);
+            pendingViewersRef.current.add(viewerId);
             return;
         }
 

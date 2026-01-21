@@ -1,0 +1,30 @@
+services:
+  # Backend WebSocket Server
+  - type: web
+    name: webrtc-server
+    env: node
+    root: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/stats
+    autoDeploy: true
+
+  # Frontend React Client
+  - type: web
+    name: webrtc-client
+    env: static
+    buildCommand: cd ../front && npm install && npm run build
+    staticPublishPath: ../front/build
+    envVars:
+      - key: REACT_APP_WS_URL
+        value: wss://webrtc-server.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    autoDeploy: true

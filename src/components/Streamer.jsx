@@ -55,6 +55,13 @@ const Streamer = () => {
                     setStatus('broadcasting');
                     break;
 
+                case 'stream-deleted':
+                    addLog(`🗑️ Stream supprimé définitivement: ${message.streamId}`);
+                    setStreamId('');
+                    setViewers(0);
+                    setStatus('connected');
+                    break;
+
                 case 'viewer-joined':
                     addLog(`👁️ Nouveau viewer: ${message.viewerId}`);
                     setViewers(message.viewerCount);
@@ -68,7 +75,6 @@ const Streamer = () => {
                     break;
 
                 case 'offer':
-                    // Un viewer veut nous envoyer une offre (cas improbable pour broadcaster)
                     addLog(`📨 Offer reçu de ${message.senderId}`);
                     break;
 
@@ -83,6 +89,10 @@ const Streamer = () => {
 
                 case 'streams-list':
                     addLog(`📊 ${message.streams.length} streams disponibles`);
+                    break;
+
+                case 'error':
+                    addLog(`❌ Erreur: ${message.message}`);
                     break;
             }
         };
@@ -141,7 +151,6 @@ const Streamer = () => {
 
     const handleNewViewer = (viewerId, streamId) => {
         addLog(`📤 Création offer pour ${viewerId}`);
-        addLog(`🔄 Création connexion pour ${viewerId} sur ${streamId}`);
 
         const config = {
             iceServers: [
@@ -198,7 +207,7 @@ const Streamer = () => {
                 webSocketRef.current.send(JSON.stringify({
                     type: 'offer',
                     targetId: viewerId,
-                    streamId: streamId, // Ajouter l'ID du stream
+                    streamId: streamId,
                     sdp: peerConnection.localDescription
                 }));
                 addLog(`📤 Offer envoyée à ${viewerId} pour ${streamId}`);
@@ -263,6 +272,23 @@ const Streamer = () => {
         setStatus('connected');
     };
 
+    const deleteStream = () => {
+        if (!streamId) return;
+        
+        addLog('🗑️ Suppression définitive du stream...');
+        
+        // Envoyer la demande de suppression au serveur
+        if (webSocketRef.current?.readyState === WebSocket.OPEN) {
+            webSocketRef.current.send(JSON.stringify({
+                type: 'delete-stream',
+                streamId: streamId
+            }));
+        }
+        
+        // Arrêter le streaming localement
+        stopStreaming();
+    };
+
     const cleanup = () => {
         stopStreaming();
         if (webSocketRef.current) {
@@ -298,9 +324,14 @@ const Streamer = () => {
                 )}
 
                 {status === 'broadcasting' && (
-                    <button onClick={stopStreaming} className="stop-button">
-                        🛑 Arrêter le Stream
-                    </button>
+                    <div className="stream-control-buttons">
+                        <button onClick={stopStreaming} className="stop-button">
+                            🛑 Arrêter le Stream
+                        </button>
+                        <button onClick={deleteStream} className="delete-button" title="Supprimer définitivement le stream">
+                            🗑️ Supprimer le Stream
+                        </button>
+                    </div>
                 )}
             </div>
 

@@ -94,7 +94,7 @@
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
-.start-button, .stop-button {
+.start-button, .stop-button, .delete-button {
   padding: 12px 24px;
   font-size: 16px;
   font-weight: bold;
@@ -126,6 +126,22 @@
 .stop-button:hover {
   background-color: #CC0000;
   transform: translateY(-2px);
+}
+
+.delete-button {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #ff4757;
+  transform: translateY(-2px);
+}
+
+.stream-control-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .video-container {
@@ -220,6 +236,10 @@
   
   .title-input {
     width: 100%;
+  }
+  
+  .stream-control-buttons {
+    flex-direction: column;
   }
   
   .video-container {

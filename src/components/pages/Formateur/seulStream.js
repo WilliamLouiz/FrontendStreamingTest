@@ -19,7 +19,7 @@ function SeulStream() {
   // RÉFÉRENCES EXACTEMENT COMME MultiVideo
   const streamRef = useRef(null);
   const lastFrameChannelRef = useRef(null);
-  const wsUrl = process.env.REACT_APP_WS_URL || 'ws://192.168.2.160:5000' || 'ws://localhost:5000';
+  const wsUrl = process.env.REACT_APP_WS_URL || 'ws://192.168.2.161:5000' || 'ws://localhost:5000';
 
   // Récupérer le paramètre channel depuis l'URL
   useEffect(() => {

@@ -15,7 +15,7 @@ function MultiVideo() {
   const streamRefs = useRef({});
   const lastFrameChannelRef = useRef(null);
   const debugLogRef = useRef([]);
-  const wsUrl = process.env.REACT_APP_WS_URL || 'ws://192.168.2.160:5000' || 'ws://localhost:5000';
+  const wsUrl = process.env.REACT_APP_WS_URL || 'ws://192.168.2.161:5000' || 'ws://localhost:5000';
 
   // Données des vidéos (initialement vides, sera rempli avec les canaux réels)
   const [videos, setVideos] = useState([]);

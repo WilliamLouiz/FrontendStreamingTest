@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Vérifier l'authentification au chargement
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
 
@@ -47,6 +46,19 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  const hasRole = (requiredRole) => {
+    if (!user?.role) return false;
+    
+    // Si plusieurs rôles sont séparés par des virgules
+    const userRoles = user.role.split(',').map(r => r.trim());
+    
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.some(role => userRoles.includes(role));
+    }
+    
+    return userRoles.includes(requiredRole);
+  };
+
   const isAuthenticated = !!user;
 
   return (
@@ -56,7 +68,8 @@ export const AuthProvider = ({ children }) => {
       logout, 
       updateUser,
       isAuthenticated, 
-      loading 
+      loading,
+      hasRole 
     }}>
       {!loading && children}
     </AuthContext.Provider>

@@ -14,7 +14,7 @@ import "./styles/UserValidation.css";
 
 function TrainerManagement() {
 
-  const API_URL = "http://192.168.2.161:5000/api/users/stagiaires";
+  const API_URL = "http://192.168.2.161:5000/api/users/formateurs";
 
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
@@ -158,7 +158,7 @@ function TrainerManagement() {
           <div className="card-header">
             <div className="card-title">
               <RiAccountBoxLine size={40} />
-              <span> Liste des utilisateurs VR</span>
+              <span> Liste des formateurs</span>
             </div>
 
             <button className="btn-add" onClick={handleAddTrainer}>

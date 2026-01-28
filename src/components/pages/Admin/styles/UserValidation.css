@@ -1,0 +1,435 @@
+/* Animations */
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Classes utilitaires */
+        .pulse {
+          animation: pulse 2s infinite;
+        }
+
+        .hover-scale:hover {
+          transform: scale(1.05);
+        }
+
+        .hover-bg:hover {
+          background-color: #f7fafc;
+        }
+
+        .hover-green:hover {
+          background-color: #38a169;
+        }
+
+        .hover-cyan:hover {
+          background-color: #0891b2;
+        }
+
+        /* Conteneur principal */
+        .mainContainer {
+          height: 100vh;
+          background: linear-gradient(135deg, #003249 0%, #006A9B 100%);
+        }
+
+        /* Content Container */
+        .contentContainer {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+            margin: 30px auto;
+            padding: 0 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #01628F;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .card-title span{
+            font-size: 36px !important;
+        } 
+
+        .btn-add {
+            background: white;
+            color: #01628F;
+            border: 2px solid #01628F;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add:hover {
+            background: #01628F;
+            color: white;
+        }
+
+        .btn-add:hover svg {
+            fill: white;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 50px 1fr 120px 120px;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #01628F;
+            margin-bottom: 10px;
+        }
+
+        .trainer-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 120px 120px;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .trainer-row:hover {
+            background: #f8f9fa;
+        }
+
+        .trainer-row.selected {
+            background: #e3f2fd;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #01628F;
+        }
+
+        .trainer-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #01628F;
+            font-weight: 500;
+        }
+
+        .status-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: start;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            margin: 0 -10;
+        }
+
+        .status-active {
+            background: #27ae60;
+        }
+
+        .status-inactive {
+            background: #e74c3c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #27ae60;
+        }
+
+        .btn-edit:hover {
+            background: #229954;
+            transform: scale(1.1);
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .profile-card {
+            text-align: center;
+        }
+
+        .profile-title {
+            color: #01628F;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .profile-name {
+            color: #01628F;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .form-label {
+            color: #01628F;
+            font-weight: 600;
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+
+        .form-input {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            color: #7f8c8d;
+            text-align: right;
+            padding: 5px 0;
+            flex-grow: 1;
+            margin-left: 20px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            color: #2c3e50;
+        }
+
+        .form-input:disabled {
+            background-color: transparent;
+            color: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: white;
+            color: #01628F;
+            border: 2px solid #01628F;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-reset:hover {
+            background: #01628F;
+            color: white;
+        }
+
+        .btn-reset:hover svg {
+            fill: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #e74c3c;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #27ae60;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 32px;
+        }
+
+        /* Nouveau style pour le bouton Voir Plus */
+        .voir-plus-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 18px 50px;
+            background: linear-gradient(180deg, #6dd5ed 0%, #2193b0 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 4px 15px rgba(33, 147, 176, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        .voir-plus-btn::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            background: linear-gradient(180deg, #e0f7fa 0%, #b2ebf2 100%);
+            border-radius: 14px;
+            z-index: -1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .voir-plus-btn::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: white;
+            border-radius: 16px;
+            z-index: -2;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .arrows {
+            display: flex;
+            gap: 3px;
+            font-size: 22px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        .voir-plus-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(33, 147, 176, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .voir-plus-btn:hover .arrows {
+            transform: translateX(5px);
+        }
+
+        .voir-plus-btn:active {
+            transform: translateY(0);
+            box-shadow: 
+                0 2px 10px rgba(33, 147, 176, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .contentContainer {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .table-header,
+            .trainer-row {
+                grid-template-columns: 40px 1fr 80px;
+            }
+
+            .action-buttons {
+                grid-column: 2 / 4;
+                justify-content: flex-end;
+                margin-top: 10px;
+            }
+
+            .btn-add,
+            .btn-reset {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+
+            .voir-plus-btn {
+                padding: 12px 30px;
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .contentContainer {
+                padding: 0 15px;
+                gap: 20px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .btn-add,
+            .btn-reset,
+            .voir-plus-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }

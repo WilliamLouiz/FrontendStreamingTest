@@ -16,7 +16,9 @@ import FormateurSeulStream from "./components/pages/Formateur/seulStream";
 import StagiaireAccueil from "./components/pages/Stagiaire/Accueil";
 
 // admin
+import Vrhboard from "./components/pages/Admin/VRDashboard";
 import AdminDashboard from "./components/pages/Admin/Dashboard";
+import AdminDashboardListFormateur from "./components/pages/Admin/DashboardListFormateur";
 
 
 function App() {
@@ -48,7 +50,9 @@ function App() {
           {/* Routes pour Admin */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
             <Route>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/dashboard" element={<Vrhboard />} />
+              <Route path="/admin/dashboardList" element={<AdminDashboard />} />
+              <Route path="/admin/dashboardListFormateur" element={<AdminDashboardListFormateur />} />
             </Route>
           </Route>
 

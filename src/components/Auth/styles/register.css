@@ -1,0 +1,334 @@
+
+.container-register {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 50px 60px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 1047px;
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.icon {
+    width: 35px;
+    height: 35px;
+    background: #e8f4f8;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0088b8;
+    font-size: 20px;
+}
+
+h1 {
+    color: #0088b8;
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+label {
+    display: block;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 18px;
+    color: #999;
+    font-size: 18px;
+    pointer-events: none;
+}
+
+input {
+    width: 100%;
+    padding: 16px 18px 16px 50px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 12px;
+    font-size: 15px;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+input::placeholder {
+    color: #aaa;
+}
+
+input:focus {
+    outline: none;
+    background: #e8e8e8;
+    box-shadow: 0 0 0 3px rgba(0, 136, 184, 0.1);
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    margin-top: 40px;
+}
+
+.voir-plus-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 18px 30px;
+    background: linear-gradient(180deg, #6dd5ed 0%, #2193b0 100%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 15px rgba(33, 147, 176, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    width: 271.93px;
+    height: 60px;
+    flex: 0 0 auto;
+}
+
+.voir-plus-btn::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: linear-gradient(180deg, #e0f7fa 0%, #b2ebf2 100%);
+    border-radius: 14px;
+    z-index: -1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.voir-plus-btn::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    background: white;
+    border-radius: 16px;
+    z-index: -2;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.arrows {
+    display: flex;
+    gap: 3px;
+    font-size: 20px;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.voir-plus-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(33, 147, 176, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.voir-plus-btn:hover .arrows {
+    transform: translateX(5px);
+}
+
+.voir-plus-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(33, 147, 176, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-create {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 18px 30px;
+    background: linear-gradient(180deg, #56ab2f 0%, #a8e063 100%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 15px rgba(86, 171, 47, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    width: 271.93px;
+    height: 60px;
+    flex: 0 0 auto;
+}
+
+.btn-create::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: linear-gradient(180deg, #e8f5e8 0%, #d0e6d0 100%);
+    border-radius: 14px;
+    z-index: -1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-create::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    background: white;
+    border-radius: 16px;
+    z-index: -2;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(86, 171, 47, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-create:hover .arrows {
+    transform: translateX(5px);
+}
+
+.btn-create:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(86, 171, 47, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.role-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.role-option {
+  flex: 1;
+  text-align: center;
+  padding: 15px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.role-option:hover {
+  border-color: #adb5bd;
+}
+
+.role-option.selected {
+  border-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.role-option input {
+  display: none;
+}
+
+.error-tooltip {
+    position: absolute;
+    background: #ff4444;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-top: 5px;
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+input.error {
+    box-shadow: 0 0 0 2px #ff4444 !important;
+}
+
+.btn-create:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 35px 30px;
+    }
+
+    h1 {
+        font-size: 26px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .button-group {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .voir-plus-btn,
+    .btn-create {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 25px 20px;
+    }
+    
+    .button-group {
+        gap: 15px;
+    }
+    
+    .voir-plus-btn,
+    .btn-create {
+        height: 55px;
+    }
+}

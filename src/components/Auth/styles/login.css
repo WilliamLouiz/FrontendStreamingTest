@@ -1,0 +1,430 @@
+
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Container */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #003249 0%, #006A9B 100%);
+}
+
+/* Card */
+.login-card {
+  background: #fff;
+  padding: 40px;
+  border-radius: 20px;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+/* Logo */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.logo-image {
+  max-width: 200px;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2D2A46;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 12px 12px 42px;
+  border-radius: 8px;
+  border: none;
+  background: #f3f4f6;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  background: #e5e7eb;
+  box-shadow: 0 0 0 3px rgba(46,62,146,0.2);
+}
+
+/* Checkbox */
+.checkbox-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;   /* ✅ alignement vertical */
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;              /* ✅ espace propre */
+  color: #2E3E92;
+  white-space: nowrap;  /* ✅ empêche le retour à la ligne */
+}
+
+.checkbox-label input {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2E3E92;
+}
+
+
+.forgot-link {
+  color: #2E3E92;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Signup */
+.signup-text {
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.signup-link {
+  color: #2E3E92;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Button */
+.button-container {
+  display: flex;
+  justify-content: center;
+}
+
+.submit-button {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #02E2FE, #00C4E0);
+  color: #fff;
+  border-radius: 30px;
+  border: 3px solid #fff;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.3s;
+}
+
+.submit-button:hover {
+  transform: scale(1.05);
+}
+
+.arrow-icon {
+  width: 20px;
+  height: 20px;
+  stroke: white;
+  fill: none;
+  stroke-width: 2;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(209,213,219,0.8);
+  display: none; /* afficher si besoin */
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 50px;
+  border-radius: 24px;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.modal-text {
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.modal-button {
+  background: #006A9B;
+  color: white;
+  border: none;
+  padding: 14px 50px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  text-align: center;
+  width: 90%;
+  max-width: 420px;
+  animation: popup 0.3s ease;
+}
+
+@keyframes popup {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-title {
+  font-size: 22px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.modal-text {
+  font-size: 16px;
+  margin-bottom: 30px;
+  color: #444;
+}
+
+.modal-button {
+  background: linear-gradient(135deg, #02E2FE, #00C4E0);
+  color: white;
+  border: none;
+  padding: 12px 45px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-button.error {
+  background: #dc2626;
+}
+
+/* ================================
+   MODAL OVERLAY
+================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ================================
+   MODAL BOX
+================================ */
+.modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 20px;
+  padding: 35px 30px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: scaleIn 0.3s ease;
+}
+
+/* ================================
+   MODAL COLORS
+================================ */
+.modal-success {
+  border-top: 6px solid #16a34a;
+}
+
+.modal-error {
+  border-top: 6px solid #dc2626;
+}
+
+.modal-info {
+  border-top: 6px solid #2563eb;
+}
+
+/* ================================
+   CLOSE BUTTON
+================================ */
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  cursor: pointer;
+  color: #999;
+  transition: 0.2s;
+}
+
+.modal-close:hover {
+  color: #000;
+}
+
+/* ================================
+   ICON
+================================ */
+.modal-icon {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-success .modal-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.modal-error .modal-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.modal-info .modal-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+/* ================================
+   TEXT
+================================ */
+.modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #0f172a;
+}
+
+.modal-text {
+  font-size: 15px;
+  color: #475569;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+/* ================================
+   BUTTON
+================================ */
+.modal-button {
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: 0.25s ease;
+}
+
+.modal-success .modal-button {
+  background: #16a34a;
+}
+
+.modal-error .modal-button {
+  background: #dc2626;
+}
+
+.modal-info .modal-button {
+  background: #2563eb;
+}
+
+.modal-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ================================
+   FORGOT PASSWORD FORM
+================================ */
+.forgot-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.forgot-password-input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.forgot-password-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ================================
+   ANIMATIONS
+================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

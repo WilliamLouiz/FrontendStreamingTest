@@ -238,11 +238,14 @@ function TrainerManagement() {
         throw new Error(`Erreur ${response.status}: ${errorText}`);
       }
 
-      const result = await response.json();
-
-      const formattedUsers = Array.isArray(result) 
-        ? result.map(formatUser)
-        : (result.users || []).map(formatUser);
+      const formattedUsers = users.map(user => ({
+        id: user.id,
+        name: `${user.nom} ${user.prenom}`,
+        email: user.email,
+        login: user.login,
+        status: user.status === "active" ? "active" : "inactive",
+        selected: false
+      }));
 
       setTrainers(formattedUsers);
       setSelectedTrainer(formattedUsers[0] || null);

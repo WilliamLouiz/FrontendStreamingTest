@@ -14,7 +14,7 @@ function Accueil() {
   const [videoTime, setVideoTime] = useState(900);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [status, setStatus] = useState('disconnected');
-  
+
   // WebSocket - MÊME LOGIQUE QUE MultiVideo
   const [ws, setWs] = useState(null);
   const streamRef = useRef(null);
@@ -44,7 +44,7 @@ function Accueil() {
       "Développement scénario"
     ];
     const joinDates = ["15/01/2023", "22/02/2023", "10/03/2023", "05/04/2023", "18/05/2023", "30/06/2023"];
-    
+
     return {
       score: scores[Math.floor(Math.random() * scores.length)],
       maxScore: 20,
@@ -97,27 +97,106 @@ function Accueil() {
     };
   };
 
-  // Gérer les messages JSON - EXACTEMENT COMME MultiVideo
-  const handleJsonMessage = (msg) => {
+  // Fonction pour récupérer les infos des stagiaires depuis l'API
+  const fetchStagiaireInfo = async (stagiaireId) => {
+    try {
+      if (!stagiaireId) return null;
+
+      const response = await fetch('/api/verify-stagiaire', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ stagiaireId: stagiaireId })
+      });
+
+      if (!response.ok) throw new Error('Erreur API');
+
+      const data = await response.json();
+
+      if (data.success) {
+        return data.user; // Retourne { id, nom, prenom, stagiaire_id }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Erreur récupération stagiaire:', error);
+      return null;
+    }
+  };
+
+  // fonction pour enrichir les channels avec les infos stagiaires
+  const enrichChannelsWithStagiaireInfo = async (channels) => {
+    const enrichedChannels = [];
+
+    for (const channel of channels) {
+      const channelCopy = { ...channel };
+
+      // Si Unity a envoyé stagiaireId dans metadata
+      if (channel.metadata && channel.metadata.stagiaireId) {
+        const stagiaireInfo = await fetchStagiaireInfo(channel.metadata.stagiaireId);
+
+        if (stagiaireInfo) {
+          channelCopy.stagiaire = {
+            nom: stagiaireInfo.nom,
+            prenom: stagiaireInfo.prenom,
+            fullName: `${stagiaireInfo.prenom} ${stagiaireInfo.nom}`,
+            stagiaireId: stagiaireInfo.stagiaire_id
+          };
+          channelCopy.name = `Casque ${channel.id} - ${stagiaireInfo.prenom} ${stagiaireInfo.nom}`;
+        } else {
+          channelCopy.stagiaire = null;
+          channelCopy.name = `Casque ${channel.id} - Non identifié`;
+        }
+      } else {
+        channelCopy.stagiaire = null;
+        channelCopy.name = `Casque ${channel.id}`;
+      }
+
+      // Ajouter les données générées (score, tâche, etc.)
+      channelCopy.score = generateScore(channel.id);
+      channelCopy.task = generateTask(channel.id);
+      channelCopy.memberSince = generateJoinDate(channel.id);
+      channelCopy.viewerCount = channel.viewerCount || 0;
+      channelCopy.isSelected = false;
+
+      enrichedChannels.push(channelCopy);
+    }
+
+    return enrichedChannels;
+  };
+
+  // Gérer les messages JSON 
+  const handleJsonMessage = async (msg) => {
     console.log('📨 Message reçu:', msg.type);
-    
+
     switch (msg.type) {
       case 'channels-list':
-        const enrichedChannels = msg.channels.map(channel => ({
-          id: channel.id,
-          name: channel.id,
-          ...generateChannelData(channel.id),
-          active: channel.active,
-          metadata: channel.metadata,
-          viewerCount: channel.viewerCount || 0
-        }));
-        
-        setChannels(enrichedChannels);
-        
-        // Sélectionner le premier canal actif par défaut
-        if (enrichedChannels.length > 0 && !selectedChannel) {
-          const firstActiveChannel = enrichedChannels.find(ch => ch.active) || enrichedChannels[0];
-          setSelectedChannel(firstActiveChannel);
+        try {
+          const enrichedChannels = await enrichChannelsWithStagiaireInfo(msg.channels);
+          setChannels(enrichedChannels);
+
+          // Sélectionner le premier canal actif par défaut
+          if (enrichedChannels.length > 0 && !selectedChannel) {
+            const firstActiveChannel = enrichedChannels.find(ch => ch.active) || enrichedChannels[0];
+            setSelectedChannel(firstActiveChannel);
+          }
+        } catch (error) {
+          console.error('Erreur enrichissement channels:', error);
+
+          // Fallback: utiliser les données de base si erreur
+          const fallbackChannels = msg.channels.map(channel => ({
+            id: channel.id,
+            name: `Casque ${channel.id}`,
+            ...generateChannelData(channel.id),
+            active: channel.active,
+            metadata: channel.metadata,
+            viewerCount: channel.viewerCount || 0,
+            stagiaire: null // Pas d'info stagiaire
+          }));
+
+          setChannels(fallbackChannels);
         }
         break;
 
@@ -139,10 +218,10 @@ function Accueil() {
 
       case 'unity-disconnected':
         console.log(`⚠️ Unity déconnecté du canal: ${msg.channelId}`);
-        setChannels(prev => prev.map(channel => 
+        setChannels(prev => prev.map(channel =>
           channel.id === msg.channelId ? { ...channel, active: false } : channel
         ));
-        
+
         if (selectedChannel && selectedChannel.id === msg.channelId) {
           setIsVideoPlaying(false);
           setSelectedChannel(prev => ({ ...prev, active: false }));
@@ -150,20 +229,41 @@ function Accueil() {
         break;
 
       case 'viewer-count-update':
-        setChannels(prev => prev.map(channel => 
+        setChannels(prev => prev.map(channel =>
           channel.id === msg.channelId ? { ...channel, viewerCount: msg.count } : channel
         ));
         break;
     }
   };
 
+  const generateScore = (channelId) => {
+    const scores = [14, 16, 18, 12, 15, 17];
+    return scores[Math.floor(Math.random() * scores.length)];
+  };
+
+  const generateTask = (channelId) => {
+    const tasks = [
+      "Intitulé de la tache confiée au casque",
+      "Analyse des données VR",
+      "Optimisation interface",
+      "Test de simulation",
+      "Formation réalité virtuelle",
+      "Développement scénario"
+    ];
+    return tasks[Math.floor(Math.random() * tasks.length)];
+  };
+
+  const generateJoinDate = (channelId) => {
+    const joinDates = ["15/01/2023", "22/02/2023", "10/03/2023", "05/04/2023", "18/05/2023", "30/06/2023"];
+    return joinDates[Math.floor(Math.random() * joinDates.length)];
+  };
   // Gérer les données d'image - EXACTEMENT COMME MultiVideo.js
   const handleImageData = (data) => {
     const channelId = lastFrameChannelRef.current;
-    
+
     // Debug
     console.log('🖼️ Image reçue pour canal:', channelId, 'Taille:', data.size || data.byteLength, 'octets');
-    
+
     // Vérifier si on a un canvas et un canal
     if (!channelId || !streamRef.current) {
       console.log('❌ Pas de canal ou de canvas disponible');
@@ -193,7 +293,7 @@ function Accueil() {
       // Dessiner l'image sur le canvas
       ctx.drawImage(img, 0, 0);
       console.log('✅ Image dessinée sur canvas');
-      
+
       // Libérer la mémoire
       URL.revokeObjectURL(img.src);
     };
@@ -218,20 +318,20 @@ function Accueil() {
       console.log('❌ Impossible de s\'abonner: WebSocket non connecté');
       return;
     }
-    
+
     console.log(`👁️ Abonnement au canal: ${channelId}`);
-    
+
     // Désabonner du canal précédent si nécessaire
     if (selectedChannel && selectedChannel.id !== channelId && isVideoPlaying) {
       unsubscribeFromChannel(selectedChannel.id);
     }
-    
+
     // Envoyer la demande d'abonnement
     ws.send(JSON.stringify({
       type: 'viewer-subscribe',
       channelId: channelId
     }));
-    
+
     // Mettre à jour le canal sélectionné
     const channel = channels.find(ch => ch.id === channelId);
     if (channel) {
@@ -245,14 +345,14 @@ function Accueil() {
     if (!ws || ws.readyState !== WebSocket.OPEN || !channelId) return;
 
     console.log(`👋 Désabonnement du canal: ${channelId}`);
-    
+
     ws.send(JSON.stringify({
       type: 'viewer-unsubscribe',
       channelId: channelId
     }));
-    
+
     setIsVideoPlaying(false);
-    
+
     // Effacer le canvas
     if (streamRef.current) {
       const ctx = streamRef.current.getContext('2d');
@@ -275,7 +375,7 @@ function Accueil() {
   // Auto-connexion au chargement
   useEffect(() => {
     connectWebSocket();
-    
+
     return () => {
       if (ws) {
         ws.close();
@@ -307,11 +407,11 @@ function Accueil() {
       isSelected: channel.id === channelId
     }));
     setChannels(updatedChannels);
-    
+
     const channel = channels.find(ch => ch.id === channelId);
     if (channel) {
       setSelectedChannel(channel);
-      
+
       // Si on clique sur un canal différent de celui en cours de lecture
       if (isVideoPlaying && selectedChannel && selectedChannel.id !== channelId) {
         // Se désabonner de l'ancien et s'abonner au nouveau
@@ -336,13 +436,13 @@ function Accueil() {
       console.log('❌ Aucun canal sélectionné');
       return;
     }
-    
+
     if (!selectedChannel.active) {
       console.log('❌ Canal inactif');
       alert('Ce casque VR est actuellement hors ligne');
       return;
     }
-    
+
     if (isVideoPlaying) {
       console.log('⏸️ Arrêt de la lecture');
       unsubscribeFromChannel(selectedChannel.id);
@@ -354,7 +454,7 @@ function Accueil() {
 
   const openProfilePopup = () => {
     if (!selectedChannel) return;
-    
+
     setProfileForm({
       nom: selectedChannel.name,
       prenom: selectedChannel.name.split(' ')[0] || "",
@@ -387,12 +487,12 @@ function Accueil() {
 
   return (
     <div className="container">
-      <Navbar/>
+      <Navbar />
       <div className="mainGrid">
         {/* Liste des casques/canaux */}
         <div className="userListCard">
           <div className="cardHeader">
-            <FaRegUser size={30} color="#0056b3"/>
+            <FaRegUser size={30} color="#0056b3" />
             <h2 className="cardTitle">Casques VR Connectés</h2>
             <div style={{
               marginLeft: 'auto',
@@ -407,7 +507,7 @@ function Accueil() {
               }}>
                 {status === 'connected' ? '✅ Connecté' : '🔌 Déconnecté'}
               </span>
-              <button 
+              <button
                 onClick={requestChannelList}
                 style={{
                   background: 'none',
@@ -471,12 +571,12 @@ function Accueil() {
                             <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
                             <path d="M2 8h20M6 1v3M18 1v3" />
                           </svg>
-                          <input 
-                            type="text" 
-                            name="nom" 
-                            value={profileForm.nom} 
+                          <input
+                            type="text"
+                            name="nom"
+                            value={profileForm.nom}
                             onChange={handleFormChange}
-                            className="profile-popup-input" 
+                            className="profile-popup-input"
                           />
                         </div>
                       </div>
@@ -487,12 +587,12 @@ function Accueil() {
                             <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
                             <path d="M2 8h20M6 1v3M18 1v3" />
                           </svg>
-                          <input 
-                            type="text" 
-                            name="pseudo" 
-                            value={profileForm.pseudo} 
+                          <input
+                            type="text"
+                            name="pseudo"
+                            value={profileForm.pseudo}
                             onChange={handleFormChange}
-                            className="profile-popup-input" 
+                            className="profile-popup-input"
                             readOnly
                           />
                         </div>
@@ -507,12 +607,12 @@ function Accueil() {
                             <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
                             <path d="M2 8h20M6 1v3M18 1v3" />
                           </svg>
-                          <input 
-                            type="text" 
-                            name="titre" 
-                            value={profileForm.titre} 
+                          <input
+                            type="text"
+                            name="titre"
+                            value={profileForm.titre}
                             onChange={handleFormChange}
-                            className="profile-popup-input" 
+                            className="profile-popup-input"
                           />
                         </div>
                       </div>
@@ -523,12 +623,12 @@ function Accueil() {
                             <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
                             <path d="M2 8h20M6 1v3M18 1v3" />
                           </svg>
-                          <input 
-                            type="email" 
-                            name="email" 
-                            value={profileForm.email} 
+                          <input
+                            type="email"
+                            name="email"
+                            value={profileForm.email}
                             onChange={handleFormChange}
-                            className="profile-popup-input" 
+                            className="profile-popup-input"
                           />
                         </div>
                       </div>
@@ -541,11 +641,11 @@ function Accueil() {
                           <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
                           <path d="M2 8h20M6 1v3M18 1v3" />
                         </svg>
-                        <textarea 
-                          name="bio" 
-                          value={profileForm.bio} 
+                        <textarea
+                          name="bio"
+                          value={profileForm.bio}
                           onChange={handleFormChange}
-                          className="profile-popup-textarea" 
+                          className="profile-popup-textarea"
                         />
                       </div>
                     </div>
@@ -577,16 +677,16 @@ function Accueil() {
                 <tr>
                   <td colSpan="5" className="td textCenter">
                     <div style={{ padding: '40px', color: '#6b7280' }}>
-                      {status === 'connected' ? 
-                        'Aucun casque connecté pour le moment...' : 
+                      {status === 'connected' ?
+                        'Aucun casque connecté pour le moment...' :
                         'Connexion au serveur en cours...'}
                     </div>
                   </td>
                 </tr>
               ) : (
                 channels.map((channel) => (
-                  <tr 
-                    key={channel.id} 
+                  <tr
+                    key={channel.id}
                     className="tableRow"
                     onClick={() => handleChannelSelect(channel.id)}
                     style={{
@@ -618,20 +718,37 @@ function Accueil() {
                             borderRadius: '50%',
                             backgroundColor: channel.active ? '#38a169' : '#dc2626'
                           }} />
-                          <FaRegUser size={20} color="#0056b3"/>
+                          <FaRegUser size={20} color="#0056b3" />
                         </div>
-                        <span className="userName2">
-                          {channel.name}
+                        <div className="userInfo">
+                          <span className="userName2">
+                            {channel.name}
+                          </span>
+                          {channel.stagiaire && (
+                            <div className="stagiaire-info" style={{
+                              fontSize: '12px',
+                              color: '#4a5568',
+                              marginTop: '2px'
+                            }}>
+                              <span style={{ fontWeight: '500' }}>
+                                👤 {channel.stagiaire.fullName}
+                              </span>
+                              <span style={{ marginLeft: '8px', color: '#718096' }}>
+                                ID: {channel.stagiaire.stagiaireId}
+                              </span>
+                            </div>
+                          )}
                           {channel.viewerCount > 0 && (
                             <span style={{
-                              marginLeft: '8px',
+                              marginTop: '4px',
                               fontSize: '11px',
-                              color: '#6b7280'
+                              color: '#6b7280',
+                              display: 'block'
                             }}>
-                              👥 {channel.viewerCount}
+                              👥 {channel.viewerCount} spectateurs
                             </span>
                           )}
-                        </span>
+                        </div>
                       </div>
                     </td>
                     <td className="td taskColumn">{channel.task}</td>
@@ -643,9 +760,9 @@ function Accueil() {
                     </td>
                     <td className="td" style={{ textAlign: 'center' }}>
                       {channel.isScoreValidated ? (
-                        <FaCheck size={20} color='#1E9D0D'/>
+                        <FaCheck size={20} color='#1E9D0D' />
                       ) : (
-                        <IoMdClose size={20} color='#BA2828'/>
+                        <IoMdClose size={20} color='#BA2828' />
                       )}
                     </td>
                   </tr>
@@ -696,7 +813,7 @@ function Accueil() {
                     {isVideoPlaying ? 'LIVE' : 'OFFLINE'}
                   </span>
                 </div>
-                
+
                 {/* Canvas pour afficher le stream WebSocket - MÊME APPROCHE QUE MultiVideo */}
                 <canvas
                   ref={streamRef}
@@ -707,11 +824,11 @@ function Accueil() {
                     display: 'block'
                   }}
                 />
-                
+
                 <div className="timeCounter">{formatTime(videoTime)}</div>
                 <div className="playButtonWrapper">
-                  <button 
-                    className="playButton hover-scale" 
+                  <button
+                    className="playButton hover-scale"
                     onClick={handlePlayVideo}
                     disabled={!selectedChannel.active}
                     style={{
@@ -765,8 +882,8 @@ function Accueil() {
                 <div className="infoBlock">
                   <div className="infoLabel">Statut stream</div>
                   <div className="infoText">
-                    {isVideoPlaying ? 
-                      '✅ Stream en direct actif' : 
+                    {isVideoPlaying ?
+                      '✅ Stream en direct actif' :
                       '⏸️ Stream en pause'}
                   </div>
                 </div>

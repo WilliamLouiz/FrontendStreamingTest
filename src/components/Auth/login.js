@@ -2,6 +2,7 @@
 import './styles/login.css';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import logo from "../../assets/images/logo.png";
 
 const Login = () => {
@@ -18,10 +19,12 @@ const Login = () => {
     isOpen: false,
     type: '',
     title: '',
-    message: ''
+    message: '',
+    requiresValidation: false
   });
   const [forgotEmail, setForgotEmail] = useState('');
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -31,18 +34,36 @@ const Login = () => {
     }));
   };
 
-  const showModal = (type, title, message) => {
+  const showModal = (type, title, message, requiresValidation = false) => {
     setModal({
       isOpen: true,
       type,
       title,
-      message
+      message,
+      requiresValidation
     });
   };
 
   const closeModal = () => {
-    setModal({ isOpen: false, type: '', title: '', message: '' });
+    setModal({ 
+      isOpen: false, 
+      type: '', 
+      title: '', 
+      message: '',
+      requiresValidation: false 
+    });
     setForgotEmail('');
+  };
+
+  // Fonction pour déterminer la route en fonction du rôle
+  const getRouteByRole = (role) => {
+    const roleRoutes = {
+      'admin': '/admin/dashboard',
+      'formateur': '/formateur/accueil',
+      'stagiaire': '/stagiaire/accueil'
+    };
+    
+    return roleRoutes[role] || '/';
   };
 
   const handleSubmit = async (e) => {
@@ -79,11 +100,50 @@ const Login = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Échec de la connexion');
+        // Gestion des erreurs spécifiques du backend
+        if (data.error) {
+          // Compte non validé
+          if (data.requires_validation) {
+            showModal(
+              'info', 
+              'Compte en attente de validation', 
+              data.error,
+              true
+            );
+          } 
+          // Compte rejeté
+          else if (response.status === 403 && data.error.includes('rejeté')) {
+            showModal('error', 'Compte rejeté', data.error);
+          }
+          // Compte suspendu
+          else if (response.status === 403 && data.error.includes('suspendu')) {
+            showModal('error', 'Compte suspendu', data.error);
+          }
+          // Email ou mot de passe incorrect
+          else if (response.status === 401) {
+            showModal('error', 'Erreur de connexion', data.error);
+          }
+          // Autres erreurs
+          else {
+            showModal('error', 'Erreur', data.error);
+          }
+        } else {
+          showModal('error', 'Erreur', 'Une erreur est survenue lors de la connexion');
+        }
+        setLoading(false);
+        return;
       }
 
-      // Stocker le token et les informations utilisateur
-      if (data.token && data.user) {
+      // Vérifier que l'utilisateur a un rôle valide
+      if (data.token && data.user && data.user.role) {
+        const validRoles = ['admin', 'formateur', 'stagiaire'];
+        
+        if (!validRoles.includes(data.user.role)) {
+          showModal('error', 'Erreur', 'Rôle utilisateur non autorisé');
+          setLoading(false);
+          return;
+        }
+
         // Utiliser le contexte Auth pour la connexion
         login(data.token, data.user);
         
@@ -94,18 +154,30 @@ const Login = () => {
         } else {
           localStorage.removeItem('rememberMe');
         }
+
+        // Déterminer la route en fonction du rôle
+        const redirectRoute = getRouteByRole(data.user.role);
+        
+        // Afficher le succès avec information sur la redirection
+        showModal('success', 'Connexion réussie', 
+          `Vous allez être redirigé vers le tableau de bord ${data.user.role}.`);
+
+        // Redirection après 2 secondes
+        setTimeout(() => {
+          navigate(redirectRoute);
+        }, 2000);
+
+      } else {
+        throw new Error('Données utilisateur incomplètes');
       }
 
-      // Afficher le succès
-      showModal('success', 'Connexion réussie', 'Vous allez être redirigé vers votre tableau de bord.');
-
-      // Redirection après 2 secondes
-      setTimeout(() => {
-        window.location.href = '/accueil';
-      }, 2000);
-
     } catch (err) {
-      showModal('error', 'Erreur de connexion', err.message || 'Email ou mot de passe incorrect.');
+      // Gestion des erreurs réseau ou autres
+      if (err.message.includes('Failed to fetch')) {
+        showModal('error', 'Erreur réseau', 'Impossible de se connecter au serveur. Vérifiez votre connexion.');
+      } else {
+        showModal('error', 'Erreur', err.message || 'Une erreur inattendue est survenue');
+      }
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -136,6 +208,8 @@ const Login = () => {
         body: JSON.stringify({ email: forgotEmail }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         showModal('success', 'Email envoyé', 
           `Un lien de réinitialisation a été envoyé à ${forgotEmail}. 
@@ -145,12 +219,12 @@ const Login = () => {
           closeModal();
         }, 4000);
       } else {
-        throw new Error('Échec de l\'envoi de l\'email');
+        throw new Error(data.error || 'Échec de l\'envoi de l\'email');
       }
       
     } catch (err) {
       showModal('error', 'Erreur', 
-        'Impossible d\'envoyer l\'email de réinitialisation. Veuillez réessayer.');
+        err.message || 'Impossible d\'envoyer l\'email de réinitialisation. Veuillez réessayer.');
     }
   };
 
@@ -161,6 +235,12 @@ const Login = () => {
       title: 'Mot de passe oublié',
       message: 'Entrez votre adresse email pour réinitialiser votre mot de passe.'
     });
+  };
+
+ 
+  const handleContactAdmin = () => {
+    // Vous pouvez rediriger vers une page contact ou ouvrir un email client
+    window.location.href = 'mailto:njatomiarintsoawilliam@gmail.com?subject=Validation%20de%20compte';
   };
 
   // Récupérer les informations "Se souvenir de moi" au chargement
@@ -211,6 +291,37 @@ const Login = () => {
             <button className="modal-button" onClick={closeModal}>
               Réessayer
             </button>
+          </div>
+        );
+      
+      case 'info':
+        return (
+          <div className="modal modal-info">
+            <button className="modal-close" onClick={closeModal}>×</button>
+            <div className="modal-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+            </div>
+            <h2 className="modal-title">{modal.title}</h2>
+            <p className="modal-text">{modal.message}</p>
+            
+            {modal.requiresValidation && (
+              <div className="validation-actions">
+                <button 
+                  className="modal-button" 
+                  onClick={handleContactAdmin}
+                >
+                  Contacter l'administrateur
+                </button>
+              </div>
+            )}
+            
+            {!modal.requiresValidation && (
+              <button className="modal-button" onClick={closeModal}>
+                OK
+              </button>
+            )}
           </div>
         );
       

@@ -15,11 +15,13 @@ import FormateurSeulStream from "./components/pages/Formateur/seulStream";
 // Stagiaire
 import StagiaireAccueil from "./components/pages/Stagiaire/Accueil";
 
-// admin
+// Admin
 import Vrhboard from "./components/pages/Admin/VRDashboard";
 import AdminDashboard from "./components/pages/Admin/Dashboard";
 import AdminDashboardListFormateur from "./components/pages/Admin/DashboardListFormateur";
 
+// Profil
+import Profile from "./components/profil/profil";
 
 function App() {
   return (
@@ -53,6 +55,13 @@ function App() {
               <Route path="/admin/dashboard" element={<Vrhboard />} />
               <Route path="/admin/dashboardList" element={<AdminDashboard />} />
               <Route path="/admin/dashboardListFormateur" element={<AdminDashboardListFormateur />} />
+            </Route>
+          </Route>
+
+             {/* Route profil - accessible à tous les rôles connectés */}
+          <Route element={<PrivateRoute />}>
+            <Route>
+              <Route path="/profil" element={<Profile />} />
             </Route>
           </Route>
 

@@ -1,5 +1,3 @@
-// components/Auth/login.jsx
-import './styles/login.css';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +23,312 @@ const Login = () => {
   const [forgotEmail, setForgotEmail] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Styles
+  const styles = {
+    // Body/Container styles
+    body: {
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+    loginContainer: {
+      minHeight: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      background: "linear-gradient(135deg, #003249 0%, #006A9B 100%)",
+    },
+    loginCard: {
+      background: "#fff",
+      padding: "40px",
+      borderRadius: "20px",
+      maxWidth: "450px",
+      width: "100%",
+      boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+    },
+    
+    // Logo styles
+    logoContainer: {
+      display: "flex",
+      justifyContent: "center",
+      marginBottom: "40px",
+    },
+    logoImage: {
+      maxWidth: "200px",
+    },
+    
+    // Form styles
+    formGroup: {
+      marginBottom: "24px",
+    },
+    formLabel: {
+      fontSize: "14px",
+      fontWeight: "500",
+      color: "#2D2A46",
+      marginBottom: "8px",
+      display: "block",
+    },
+    inputWrapper: {
+      position: "relative",
+    },
+    inputIcon: {
+      position: "absolute",
+      left: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      fontSize: "18px",
+    },
+    formInput: {
+      width: "90%",
+      padding: "12px 12px 12px 42px",
+      borderRadius: "8px",
+      border: "none",
+      background: "#f3f4f6",
+      fontSize: "14px",
+      transition: "all 0.3s ease",
+    },
+    formInputFocus: {
+      outline: "none",
+      background: "#e5e7eb",
+      boxShadow: "0 0 0 3px rgba(46,62,146,0.2)",
+    },
+    
+    // Checkbox styles
+    checkboxRow: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "20px",
+      fontSize: "14px",
+    },
+    checkboxLabel: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      color: "#2E3E92",
+      whiteSpace: "nowrap",
+      cursor: "pointer",
+    },
+    forgotLink: {
+      color: "#2E3E92",
+      textDecoration: "none",
+      fontWeight: "600",
+      cursor: "pointer",
+      transition: "color 0.2s",
+    },
+    forgotLinkHover: {
+      color: "#1e2a78",
+    },
+    
+    // Signup text
+    signupText: {
+      fontSize: "14px",
+      marginBottom: "24px",
+    },
+    signupLink: {
+      color: "#2E3E92",
+      fontWeight: "600",
+      textDecoration: "none",
+    },
+    
+    // Button styles
+    buttonContainer: {
+      display: "flex",
+      justifyContent: "center",
+    },
+    submitButton: {
+      padding: "12px 32px",
+      background: "linear-gradient(135deg, #02E2FE, #00C4E0)",
+      color: "#fff",
+      borderRadius: "30px",
+      border: "3px solid #fff",
+      fontWeight: "700",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      transition: "all 0.3s ease",
+      fontSize: "14px",
+      outline: "none",
+    },
+    submitButtonHover: {
+      transform: "scale(1.05)",
+    },
+    submitButtonDisabled: {
+      opacity: "0.7",
+      cursor: "not-allowed",
+    },
+    arrows: {
+      display: "flex",
+      gap: "3px",
+      fontSize: "20px",
+      fontWeight: "bold",
+      transition: "transform 0.3s ease",
+    },
+    
+    // Loading spinner
+    loadingSpinner: {
+      width: "20px",
+      height: "20px",
+      border: "3px solid rgba(255,255,255,0.3)",
+      borderTopColor: "#fff",
+      borderRadius: "50%",
+      animation: "spin 1s linear infinite",
+    },
+    
+    // Modal styles
+    modalOverlay: {
+      position: "fixed",
+      inset: "0",
+      background: "rgba(0, 0, 0, 0.55)",
+      backdropFilter: "blur(4px)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: "999",
+      animation: "fadeIn 0.25s ease",
+    },
+    modal: {
+      background: "#ffffff",
+      width: "90%",
+      maxWidth: "420px",
+      borderRadius: "20px",
+      padding: "35px 30px",
+      textAlign: "center",
+      position: "relative",
+      boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
+      animation: "scaleIn 0.3s ease",
+    },
+    modalSuccess: {
+      borderTop: "6px solid #16a34a",
+    },
+    modalError: {
+      borderTop: "6px solid #dc2626",
+    },
+    modalInfo: {
+      borderTop: "6px solid #2563eb",
+    },
+    modalClose: {
+      position: "absolute",
+      top: "14px",
+      right: "18px",
+      border: "none",
+      background: "transparent",
+      fontSize: "26px",
+      cursor: "pointer",
+      color: "#999",
+      transition: "color 0.2s",
+      outline: "none",
+    },
+    modalCloseHover: {
+      color: "#000",
+    },
+    modalIcon: {
+      width: "70px",
+      height: "70px",
+      margin: "0 auto 15px",
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    modalIconSuccess: {
+      background: "#dcfce7",
+      color: "#16a34a",
+    },
+    modalIconError: {
+      background: "#fee2e2",
+      color: "#dc2626",
+    },
+    modalIconInfo: {
+      background: "#dbeafe",
+      color: "#2563eb",
+    },
+    modalTitle: {
+      fontSize: "22px",
+      fontWeight: "700",
+      marginBottom: "10px",
+      color: "#0f172a",
+    },
+    modalText: {
+      fontSize: "15px",
+      color: "#475569",
+      marginBottom: "25px",
+      lineHeight: "1.6",
+    },
+    modalButton: {
+      width: "100%",
+      padding: "13px",
+      borderRadius: "12px",
+      border: "none",
+      fontSize: "15px",
+      fontWeight: "600",
+      cursor: "pointer",
+      color: "white",
+      transition: "all 0.25s ease",
+      outline: "none",
+    },
+    modalButtonSuccess: {
+      background: "#16a34a",
+    },
+    modalButtonError: {
+      background: "#dc2626",
+    },
+    modalButtonInfo: {
+      background: "#2563eb",
+    },
+    modalButtonHover: {
+      opacity: "0.9",
+      transform: "translateY(-1px)",
+    },
+    
+    // Forgot password form
+    forgotPasswordForm: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "15px",
+    },
+    forgotPasswordInput: {
+      padding: "14px",
+      borderRadius: "12px",
+      border: "1px solid #cbd5e1",
+      fontSize: "15px",
+      outline: "none",
+      transition: "border 0.2s, box-shadow 0.2s",
+    },
+    forgotPasswordInputFocus: {
+      borderColor: "#2563eb",
+      boxShadow: "0 0 0 3px rgba(37, 99, 235, 0.15)",
+    },
+    
+    // Validation actions
+    validationActions: {
+      marginTop: "20px",
+    },
+  };
+
+  // Keyframes for animations
+  const keyframes = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes scaleIn {
+      from { 
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to { 
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  `;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -160,7 +464,7 @@ const Login = () => {
         
         // Afficher le succès avec information sur la redirection
         showModal('success', 'Connexion réussie', 
-          `Vous allez être redirigé vers le tableau de bord ${data.user.role}.`);
+          `Votre compte est un compte ${data.user.role}.`);
 
         // Redirection après 2 secondes
         setTimeout(() => {
@@ -237,7 +541,6 @@ const Login = () => {
     });
   };
 
- 
   const handleContactAdmin = () => {
     // Vous pouvez rediriger vers une page contact ou ouvrir un email client
     window.location.href = 'mailto:njatomiarintsoawilliam@gmail.com?subject=Validation%20de%20compte';
@@ -259,19 +562,79 @@ const Login = () => {
   }, []);
 
   const ModalContent = () => {
+    const getModalStyle = () => {
+      switch (modal.type) {
+        case 'success':
+          return { ...styles.modal, ...styles.modalSuccess };
+        case 'error':
+          return { ...styles.modal, ...styles.modalError };
+        case 'info':
+        case 'forgot':
+          return { ...styles.modal, ...styles.modalInfo };
+        default:
+          return styles.modal;
+      }
+    };
+
+    const getModalIconStyle = () => {
+      switch (modal.type) {
+        case 'success':
+          return { ...styles.modalIcon, ...styles.modalIconSuccess };
+        case 'error':
+          return { ...styles.modalIcon, ...styles.modalIconError };
+        case 'info':
+        case 'forgot':
+          return { ...styles.modalIcon, ...styles.modalIconInfo };
+        default:
+          return styles.modalIcon;
+      }
+    };
+
+    const getModalButtonStyle = () => {
+      switch (modal.type) {
+        case 'success':
+          return { ...styles.modalButton, ...styles.modalButtonSuccess };
+        case 'error':
+          return { ...styles.modalButton, ...styles.modalButtonError };
+        case 'info':
+        case 'forgot':
+          return { ...styles.modalButton, ...styles.modalButtonInfo };
+        default:
+          return styles.modalButton;
+      }
+    };
+
     switch (modal.type) {
       case 'success':
         return (
-          <div className={`modal modal-${modal.type}`}>
-            <button className="modal-close" onClick={closeModal}>×</button>
-            <div className="modal-icon">
+          <div style={getModalStyle()}>
+            <button 
+              style={styles.modalClose}
+              onClick={closeModal}
+              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+            >
+              ×
+            </button>
+            <div style={getModalIconStyle()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             </div>
-            <h2 className="modal-title">{modal.title}</h2>
-            <p className="modal-text">{modal.message}</p>
-            <button className="modal-button" onClick={closeModal}>
+            <h2 style={styles.modalTitle}>{modal.title}</h2>
+            <p style={styles.modalText}>{modal.message}</p>
+            <button 
+              style={getModalButtonStyle()}
+              onClick={closeModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
               OK
             </button>
           </div>
@@ -279,16 +642,34 @@ const Login = () => {
       
       case 'error':
         return (
-          <div className={`modal modal-${modal.type}`}>
-            <button className="modal-close" onClick={closeModal}>×</button>
-            <div className="modal-icon">
+          <div style={getModalStyle()}>
+            <button 
+              style={styles.modalClose}
+              onClick={closeModal}
+              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+            >
+              ×
+            </button>
+            <div style={getModalIconStyle()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
             </div>
-            <h2 className="modal-title">{modal.title}</h2>
-            <p className="modal-text">{modal.message}</p>
-            <button className="modal-button" onClick={closeModal}>
+            <h2 style={styles.modalTitle}>{modal.title}</h2>
+            <p style={styles.modalText}>{modal.message}</p>
+            <button 
+              style={getModalButtonStyle()}
+              onClick={closeModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
               Réessayer
             </button>
           </div>
@@ -296,21 +677,36 @@ const Login = () => {
       
       case 'info':
         return (
-          <div className="modal modal-info">
-            <button className="modal-close" onClick={closeModal}>×</button>
-            <div className="modal-icon">
+          <div style={getModalStyle()}>
+            <button 
+              style={styles.modalClose}
+              onClick={closeModal}
+              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+            >
+              ×
+            </button>
+            <div style={getModalIconStyle()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
             </div>
-            <h2 className="modal-title">{modal.title}</h2>
-            <p className="modal-text">{modal.message}</p>
+            <h2 style={styles.modalTitle}>{modal.title}</h2>
+            <p style={styles.modalText}>{modal.message}</p>
             
             {modal.requiresValidation && (
-              <div className="validation-actions">
+              <div style={styles.validationActions}>
                 <button 
-                  className="modal-button" 
+                  style={getModalButtonStyle()}
                   onClick={handleContactAdmin}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "0.9";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
                 >
                   Contacter l'administrateur
                 </button>
@@ -318,7 +714,18 @@ const Login = () => {
             )}
             
             {!modal.requiresValidation && (
-              <button className="modal-button" onClick={closeModal}>
+              <button 
+                style={getModalButtonStyle()}
+                onClick={closeModal}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
                 OK
               </button>
             )}
@@ -327,26 +734,55 @@ const Login = () => {
       
       case 'forgot':
         return (
-          <div className="modal modal-info">
-            <button className="modal-close" onClick={closeModal}>×</button>
-            <div className="modal-icon">
+          <div style={getModalStyle()}>
+            <button 
+              style={styles.modalClose}
+              onClick={closeModal}
+              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+            >
+              ×
+            </button>
+            <div style={getModalIconStyle()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
             </div>
-            <h2 className="modal-title">{modal.title}</h2>
-            <p className="modal-text">{modal.message}</p>
+            <h2 style={styles.modalTitle}>{modal.title}</h2>
+            <p style={styles.modalText}>{modal.message}</p>
             
-            <form onSubmit={handleForgotPassword} className="forgot-password-form">
+            <form 
+              onSubmit={handleForgotPassword} 
+              style={styles.forgotPasswordForm}
+            >
               <input
                 type="email"
-                className="forgot-password-input"
+                style={styles.forgotPasswordInput}
                 placeholder="votreemail@mail.com"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#2563eb";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.15)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#cbd5e1";
+                  e.target.style.boxShadow = "none";
+                }}
                 required
               />
-              <button type="submit" className="modal-button">
+              <button 
+                type="submit" 
+                style={getModalButtonStyle()}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
                 Envoyer le lien
               </button>
             </form>
@@ -360,17 +796,18 @@ const Login = () => {
 
   return (
     <>
-      <div className="login-container">
-        <div className="login-card">
-          <div className="logo-container">
-            <img src={logo} alt="VR Live Logo" className="logo-image" />
+      <style>{keyframes}</style>
+      <div style={styles.loginContainer}>
+        <div style={styles.loginCard}>
+          <div style={styles.logoContainer}>
+            <img src={logo} alt="VR Live Logo" style={styles.logoImage} />
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">E-mail</label>
-              <div className="input-wrapper">
-                <span className="input-icon">
+            <div style={styles.formGroup}>
+              <label style={styles.formLabel}>E-mail</label>
+              <div style={styles.inputWrapper}>
+                <span style={styles.inputIcon}>
                   <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#2c5f7c">
                     <path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z"/>
                   </svg>
@@ -378,10 +815,19 @@ const Login = () => {
                 <input 
                   type="email" 
                   name="email"
-                  className="form-input" 
+                  style={styles.formInput}
                   placeholder="votreemail@mail.com"
                   value={formData.email}
                   onChange={handleInputChange}
+                  onFocus={(e) => {
+                    e.target.style.outline = "none";
+                    e.target.style.background = "#e5e7eb";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(46,62,146,0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.background = "#f3f4f6";
+                    e.target.style.boxShadow = "none";
+                  }}
                   required 
                   disabled={loading}
                   autoComplete="email"
@@ -389,10 +835,10 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Mot de passe</label>
-              <div className="input-wrapper">
-                <span className="input-icon">
+            <div style={styles.formGroup}>
+              <label style={styles.formLabel}>Mot de passe</label>
+              <div style={styles.inputWrapper}>
+                <span style={styles.inputIcon}>
                   <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#2c5f7c">
                     <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/>
                   </svg>
@@ -400,10 +846,19 @@ const Login = () => {
                 <input 
                   type="password" 
                   name="password"
-                  className="form-input" 
+                  style={styles.formInput}
                   placeholder="••••••••••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
+                  onFocus={(e) => {
+                    e.target.style.outline = "none";
+                    e.target.style.background = "#e5e7eb";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(46,62,146,0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.background = "#f3f4f6";
+                    e.target.style.boxShadow = "none";
+                  }}
                   required 
                   disabled={loading}
                   autoComplete="current-password"
@@ -411,44 +866,69 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="checkbox-row">
-              <label className="checkbox-label">
+            <div style={styles.checkboxRow}>
+              <label style={styles.checkboxLabel}>
                 <input 
                   type="checkbox" 
                   name="rememberMe"
                   checked={formData.rememberMe}
                   onChange={handleInputChange}
                   disabled={loading}
+                  style={{ 
+                    margin: "0", 
+                    width: "16px", 
+                    height: "16px", 
+                    cursor: "pointer",
+                    accentColor: "#2E3E92"
+                  }}
                 />
                 <span>Se souvenir de moi</span>
               </label>
-              <a className="forgot-link" onClick={openForgotPasswordModal}>
+              <a 
+                style={styles.forgotLink}
+                onClick={openForgotPasswordModal}
+                onMouseEnter={(e) => e.currentTarget.style.color = "#1e2a78"}
+                onMouseLeave={(e) => e.currentTarget.style.color = "#2E3E92"}
+              >
                 Mot de passe oublié
               </a>
             </div>
 
-            <div className="signup-text">
+            <div style={styles.signupText}>
               <span>Nouveau ? </span>
-              <a href="/register" className="signup-link">
+              <a href="/register" style={styles.signupLink}>
                 Créer votre compte
               </a>
             </div>
 
-            <div className="button-container">
+            <div style={styles.buttonContainer}>
               <button 
                 type="submit" 
-                className="submit-button"
+                style={{
+                  ...styles.submitButton,
+                  ...(loading ? styles.submitButtonDisabled : {}),
+                }}
                 disabled={loading}
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.transform = "scale(1)";
+                  }
+                }}
               >
                 {loading ? (
                   <>
-                    <div className="loading-spinner"></div>
+                    <div style={styles.loadingSpinner}></div>
                     CONNEXION...
                   </>
                 ) : (
                   <>
                     SE CONNECTER
-                    <span className="arrows">
+                    <span style={styles.arrows}>
                       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ffffff">
                         <path d="M383-480 200-664l56-56 240 240-240 240-56-56 183-184Zm264 0L464-664l56-56 240 240-240 240-56-56 183-184Z"/>
                       </svg>
@@ -462,7 +942,10 @@ const Login = () => {
       </div>
 
       {modal.isOpen && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div 
+          style={styles.modalOverlay} 
+          onClick={closeModal}
+        >
           <div onClick={(e) => e.stopPropagation()}>
             <ModalContent />
           </div>

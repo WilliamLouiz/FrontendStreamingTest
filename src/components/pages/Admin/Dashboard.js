@@ -59,7 +59,7 @@ function TrainerManagement() {
 
       const formattedUsers = users.map(user => ({
         id: user.id,
-        name: `${user.nom} ${user.lastName}`,
+        name: `${user.nom} ${user.prenom}`,
         email: user.email,
         login: user.login,
         status: user.status === "active" ? "active" : "inactive",

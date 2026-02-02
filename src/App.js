@@ -19,6 +19,7 @@ import StagiaireAccueil from "./components/pages/Stagiaire/Accueil";
 import Vrhboard from "./components/pages/Admin/VRDashboard";
 import AdminDashboard from "./components/pages/Admin/Dashboard";
 import AdminDashboardListFormateur from "./components/pages/Admin/DashboardListFormateur";
+import AjoutProfilStagiaire from "./components/pages/Admin/ajoutProfilStagiaire";
 
 // Profil
 import Profile from "./components/profil/profil";
@@ -31,11 +32,6 @@ function App() {
           {/* Routes publiques */}
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
-
-          {/* Route pour redirection automatique */}
-          <Route element={<PrivateRoute />}>
-            <Route path="/accueil" />
-          </Route>
 
           {/* Routes pour Formateur */}
           <Route element={<PrivateRoute allowedRoles={['formateur']} />}>
@@ -51,22 +47,20 @@ function App() {
 
           {/* Routes pour Admin */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
-            <Route>
-              <Route path="/admin/dashboard" element={<Vrhboard />} />
-              <Route path="/admin/dashboardList" element={<AdminDashboard />} />
-              <Route path="/admin/dashboardListFormateur" element={<AdminDashboardListFormateur />} />
-            </Route>
+            <Route path="/admin/dashboard" element={<Vrhboard />} />
+            <Route path="/admin/dashboardList" element={<AdminDashboard />} />
+            <Route path="/admin/dashboardListFormateur" element={<AdminDashboardListFormateur />} />
+            <Route path="/stagiaire/ajouter" element={<AjoutProfilStagiaire />} />
           </Route>
 
-             {/* Route profil - accessible à tous les rôles connectés */}
+          {/* Route profil - accessible à tous les rôles connectés */}
           <Route element={<PrivateRoute />}>
-            <Route>
-              <Route path="/profil" element={<Profile />} />
-            </Route>
+            <Route path="/profil" element={<Profile />} />
           </Route>
 
-          {/* Route d'accueil générique après login */}
+          {/* Routes génériques */}
           <Route element={<PrivateRoute />}>
+            <Route path="/accueil" />
             <Route path="/home" />
           </Route>
 

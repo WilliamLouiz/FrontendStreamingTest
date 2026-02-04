@@ -1,6 +1,7 @@
 // App.jsx
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../Navbar';
+import TelechargeGroup from "../../../assets/images/Grouptelecharge.png"
 import './styles/telecharge.css';
 
 // Données de l'utilisateur
@@ -135,7 +136,7 @@ const App = () => {
             </p>
 
             <div className="success-illustration">
-              <img src="./Grouptelecharge.png" alt="Illustration succès" />
+              <img src={TelechargeGroup} alt="Illustration succès" />
             </div>
 
             <button 

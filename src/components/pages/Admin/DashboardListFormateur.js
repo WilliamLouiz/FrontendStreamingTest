@@ -9,6 +9,8 @@ import { ImSpinner11 } from "react-icons/im";
 import { CiEdit } from "react-icons/ci";
 import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
 
+import { useNavigate } from 'react-router-dom';
+
 import Navbar from "../../Navbar";
 import "./styles/UserValidation.css";
 
@@ -24,7 +26,7 @@ function TrainerManagement() {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectEmailOption, setRejectEmailOption] = useState("true");
-
+  const navigate = useNavigate();
   // ===============================
   // LOAD USERS (JWT PROTECTED)
   // ===============================
@@ -224,9 +226,11 @@ function TrainerManagement() {
     setRejectReason("");
   };
 
-  const handleAddTrainer = () => {
-    alert("Ajouter un utilisateur");
+  const handleAddTrainer = (e) => {
+   e.stopPropagation();
+  navigate(`/formateur/ajouter`);
   };
+
 
   const handleEdit = (id, e) => {
     e.stopPropagation();
@@ -294,7 +298,6 @@ function TrainerManagement() {
           <div className="table-header">
             <div></div>
             <div>Utilisateur</div>
-            <div>Statut</div>
             <div>Action</div>
           </div>
 
@@ -329,13 +332,6 @@ function TrainerManagement() {
               <div className="trainer-name">
                 <FaRegUser size={25} />
                 <span>{trainer.name}</span>
-              </div>
-
-              <div className={`status-icon status-${trainer.status}`}>
-                {trainer.status === "active"
-                  ? <IoCheckmarkOutline size={22} color="white" />
-                  : <IoClose size={22} color="white" />
-                }
               </div>
 
               <div className="action-buttons">
@@ -401,14 +397,6 @@ function TrainerManagement() {
                 <button className="btn-reset" onClick={handleResetPassword}>
                   RÉINITIALISER LE MOT DE PASSE <ImSpinner11 />
                 </button>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Statut</label>
-                <div
-                  className={`toggle-switch ${profileStatus ? "active" : ""}`}
-                  onClick={() => setProfileStatus(!profileStatus)}
-                ></div>
               </div>
 
               {/* SECTION VALIDATION - Affichée uniquement si le compte n'est pas validé */}

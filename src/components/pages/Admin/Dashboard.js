@@ -8,6 +8,7 @@ import { FaRegUser } from "react-icons/fa";
 import { ImSpinner11 } from "react-icons/im";
 import { CiEdit } from "react-icons/ci";
 import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
+import { useNavigate } from 'react-router-dom';
 
 import Navbar from "../../Navbar";
 import "./styles/UserValidation.css";
@@ -15,12 +16,17 @@ import "./styles/UserValidation.css";
 function TrainerManagement() {
 
   const API_URL = "http://192.168.2.161:5000/api/users/stagiaires";
+  const DELETE_URL = "http://192.168.2.161:5000/api/users/";
   const VALIDATE_API_URL = "http://192.168.2.161:5000/api/admin/users";
 
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [profileStatus, setProfileStatus] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [trainerToDelete, setTrainerToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectEmailOption, setRejectEmailOption] = useState("true");
@@ -48,7 +54,6 @@ function TrainerManagement() {
 
       const result = await response.json();
 
-      // ❌ Unauthorized
       if (response.status === 401) {
         console.error("401 - Unauthorized");
         setTrainers([]);
@@ -66,6 +71,7 @@ function TrainerManagement() {
         name: `${user.nom} ${user.prenom}`,
         email: user.email,
         login: user.login,
+        stagiaire_id: user.stagiaire_id || user.stagiaiaire_id || "",
         status: user.status === "active" ? "active" : "inactive",
         selected: false,
         // Récupérer le statut de validation depuis l'API
@@ -111,21 +117,21 @@ function TrainerManagement() {
 
       if (response.ok) {
         alert(`Compte validé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
-        
+
         // Mettre à jour le statut dans la liste
-        setTrainers(prev => 
-          prev.map(trainer => 
-            trainer.id === selectedTrainer.id 
-              ? { ...trainer, is_validated: true, validated: true, status: "active" } 
+        setTrainers(prev =>
+          prev.map(trainer =>
+            trainer.id === selectedTrainer.id
+              ? { ...trainer, is_validated: true, validated: true, status: "active" }
               : trainer
           )
         );
-        
+
         // Mettre à jour le trainer sélectionné
-        setSelectedTrainer(prev => 
+        setSelectedTrainer(prev =>
           prev ? { ...prev, is_validated: true, validated: true, status: "active" } : prev
         );
-        
+
         setProfileStatus(true);
       } else {
         alert(`Erreur: ${result.message || "Échec de la validation"}`);
@@ -172,21 +178,21 @@ function TrainerManagement() {
 
       if (response.ok) {
         alert(`Compte refusé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
-        
+
         // Mettre à jour le statut dans la liste
-        setTrainers(prev => 
-          prev.map(trainer => 
-            trainer.id === selectedTrainer.id 
-              ? { ...trainer, is_validated: false, validated: false, status: "inactive" } 
+        setTrainers(prev =>
+          prev.map(trainer =>
+            trainer.id === selectedTrainer.id
+              ? { ...trainer, is_validated: false, validated: false, status: "inactive" }
               : trainer
           )
         );
-        
+
         // Mettre à jour le trainer sélectionné
-        setSelectedTrainer(prev => 
+        setSelectedTrainer(prev =>
           prev ? { ...prev, is_validated: false, validated: false, status: "inactive" } : prev
         );
-        
+
         setProfileStatus(false);
         setShowRejectForm(false);
         setRejectReason("");
@@ -224,34 +230,63 @@ function TrainerManagement() {
     setRejectReason("");
   };
 
-  const handleAddTrainer = () => {
-    alert("Ajouter un utilisateur");
+  const handleAddTrainer = (e) => {
+    e.stopPropagation();
+    navigate(`/stagiaire/ajouter`);
   };
 
   const handleEdit = (id, e) => {
     e.stopPropagation();
-    alert(`Modifier utilisateur ID : ${id}`);
+    navigate(`/stagiaire/modifier/${id}`);
   };
 
-  const handleDelete = async (id, e) => {
+  const handleDeleteClick = (id, e) => {
     e.stopPropagation();
+    const trainer = trainers.find(t => t.id === id);
+    setTrainerToDelete(trainer);
+    setShowDeletePopup(true);
+  };
 
-    if (!window.confirm("Supprimer cet utilisateur ?")) return;
+  const confirmDelete = async () => {
+    if (!trainerToDelete) return;
 
     try {
-      await fetch(`${API_URL}/${id}`, {
+      setDeleting(true);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${DELETE_URL}${trainerToDelete.id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${token}`
         }
       });
 
-      setTrainers(prev => prev.filter(t => t.id !== id));
-      setSelectedTrainer(null);
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression");
+      }
 
-    } catch {
-      alert("Erreur lors de la suppression");
+      // Supprimer de la liste
+      setTrainers(prev => prev.filter(t => t.id !== trainerToDelete.id));
+
+      // Si l'utilisateur supprimé est celui sélectionné, désélectionner
+      if (selectedTrainer && selectedTrainer.id === trainerToDelete.id) {
+        setSelectedTrainer(null);
+      }
+
+      // Fermer la popup
+      setShowDeletePopup(false);
+      setTrainerToDelete(null);
+
+    } catch (error) {
+      alert("Erreur lors de la suppression : " + error.message);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeletePopup(false);
+    setTrainerToDelete(null);
   };
 
   const handleResetPassword = () => {
@@ -265,7 +300,66 @@ function TrainerManagement() {
   };
 
   const handleViewMore = () => {
-    alert("Voir plus de détails");
+    if (selectedTrainer) {
+      navigate(`/stagiaire/details/${selectedTrainer.id}`);
+    }
+  };
+
+  // ===============================
+  // RENDER DELETE POPUP
+  // ===============================
+  const renderDeletePopup = () => {
+    if (!showDeletePopup || !trainerToDelete) return null;
+
+    return (
+      <div className="popup-overlay">
+        <div className="delete-popup">
+          <div className="popup-header">
+            <h3>Confirmer la suppression</h3>
+            <button className="close-popup" onClick={cancelDelete}>
+              <IoClose size={24} />
+            </button>
+          </div>
+
+          <div className="popup-content">
+            <div className="delete-icon">
+              <RiDeleteBin6Line size={60} color="#ff4757" />
+            </div>
+
+            <p>Êtes-vous sûr de vouloir supprimer l'utilisateur :</p>
+            <p><strong>{trainerToDelete.name}</strong> ?</p>
+
+            <p className="warning-text">
+              Cette action est irréversible. Toutes les données associées à cet utilisateur seront perdues.
+            </p>
+          </div>
+
+          <div className="popup-actions">
+            <button
+              className="btn-cancel"
+              onClick={cancelDelete}
+              disabled={deleting}
+            >
+              Annuler
+            </button>
+            <button
+              className="btn-confirm-delete"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <span className="spinner"></span>
+                  Suppression...
+                </>
+              ) : (
+                "Confirmer la suppression"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // ===============================
@@ -287,14 +381,15 @@ function TrainerManagement() {
             </div>
 
             <button className="btn-add" onClick={handleAddTrainer}>
-              AJOUTER UN FORMATEUR <FiUserPlus size={20} />
+              AJOUTER UN STAGIAIRE <FiUserPlus size={20} />
             </button>
           </div>
 
           <div className="table-header">
             <div></div>
             <div>Utilisateur</div>
-            <div>Statut</div>
+            <div>Stagiaire id</div>
+            <div>Validé</div>
             <div>Action</div>
           </div>
 
@@ -331,8 +426,18 @@ function TrainerManagement() {
                 <span>{trainer.name}</span>
               </div>
 
-              <div className={`status-icon status-${trainer.status}`}>
-                {trainer.status === "active"
+              {/* Cellule pour l'ID stagiaire */}
+              <div className="stagiaire-id-cell">
+                {trainer.stagiaire_id || "N/A"}
+              </div>
+
+              <div
+                className="status-icon"
+                style={{
+                  backgroundColor: trainer.is_validated ? '#27ae60' : 'red'
+                }}
+              >
+                {trainer.is_validated
                   ? <IoCheckmarkOutline size={22} color="white" />
                   : <IoClose size={22} color="white" />
                 }
@@ -348,7 +453,7 @@ function TrainerManagement() {
 
                 <button
                   className="btn-action btn-delete"
-                  onClick={(e) => handleDelete(trainer.id, e)}
+                  onClick={(e) => handleDeleteClick(trainer.id, e)}
                 >
                   <RiDeleteBin6Line size={22} color="#fff" />
                 </button>
@@ -386,12 +491,13 @@ function TrainerManagement() {
                 />
               </div>
 
+              {/* Ajout de l'ID stagiaire dans le profil */}
               <div className="form-group">
-                <label className="form-label">Login</label>
+                <label className="form-label">Stagiaire ID</label>
                 <input
                   type="text"
                   className="form-input"
-                  value={selectedTrainer.login || ""}
+                  value={selectedTrainer.stagiaire_id || "N/A"}
                   readOnly
                 />
               </div>
@@ -403,24 +509,16 @@ function TrainerManagement() {
                 </button>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Statut</label>
-                <div
-                  className={`toggle-switch ${profileStatus ? "active" : ""}`}
-                  onClick={() => setProfileStatus(!profileStatus)}
-                ></div>
-              </div>
-
               {/* SECTION VALIDATION - Affichée uniquement si le compte n'est pas validé */}
               {!selectedTrainer.is_validated && (
                 <div className="validation-section">
                   <div className="validation-info">
-                    <span className="validation-alert">⚠️</span>
+                    <span className="validation-alert"></span>
                     <span className="validation-text">
                       Ce compte n'est pas encore validé. Veuillez approuver ou refuser l'accès.
                     </span>
                   </div>
-                  
+
                   {/* BADGES BOUTONS VALIDER/REFUSER */}
                   <div className="validation-buttons-container">
                     <button
@@ -429,7 +527,7 @@ function TrainerManagement() {
                     >
                       VALIDER LE COMPTE
                     </button>
-                    
+
                     <button
                       className="btn-reject"
                       onClick={() => setShowRejectForm(!showRejectForm)}
@@ -451,7 +549,7 @@ function TrainerManagement() {
                           rows="4"
                         />
                       </div>
-                      
+
                       <div className="form-group">
                         <label className="form-label">Envoyer un email ?</label>
                         <div className="radio-group">
@@ -477,7 +575,7 @@ function TrainerManagement() {
                           </label>
                         </div>
                       </div>
-                      
+
                       <div className="reject-form-actions">
                         <button
                           className="btn-submit-reject"
@@ -504,7 +602,7 @@ function TrainerManagement() {
               {/* Afficher un message si le compte est déjà validé */}
               {selectedTrainer.is_validated && (
                 <div className="validation-status-message validated">
-                  <span className="status-icon-check">✅</span>
+                  <span className="status-icon-check"></span>
                   <span className="status-text">
                     Ce compte a été validé et est actif.
                   </span>
@@ -524,6 +622,9 @@ function TrainerManagement() {
 
         </div>
       </div>
+
+      {/* DELETE CONFIRMATION POPUP */}
+      {renderDeletePopup()}
     </div>
   );
 }

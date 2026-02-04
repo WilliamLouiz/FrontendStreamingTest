@@ -1,9 +1,14 @@
+// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { IoMdNotificationsOutline } from "react-icons/io";
+import { useNavigate } from 'react-router-dom';
 import { FaRegUser } from "react-icons/fa";
 import { CiLogout } from "react-icons/ci";
 import logo from '../assets/images/logo.png';
 import './styles/navbar.css';
+// CORRECTION : Ajuster le chemin d'importation
+// Si votre AuthContext est dans src/context/AuthContext.jsx
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = ({ userData, onUserUpdate }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -11,6 +16,8 @@ const Navbar = ({ userData, onUserUpdate }) => {
   const [userName, setUserName] = useState('Utilisateur');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   // Mettre à jour le nom d'utilisateur quand userData change
   useEffect(() => {
@@ -31,12 +38,12 @@ const Navbar = ({ userData, onUserUpdate }) => {
   }, [userData]);
 
   const updateUserName = (user) => {
-    if (user.nom) {
+    if (user.prenom) {
       setUserName(user.prenom);
     } else if (user.nom) {
       setUserName(user.nom);
-    } else if (user.nom) {
-      setUserName(user.nom);
+    } else if (user.username) {
+      setUserName(user.username);
     } else if (user.email) {
       setUserName(user.email.split('@')[0]);
     }
@@ -77,27 +84,30 @@ const Navbar = ({ userData, onUserUpdate }) => {
     };
   }, []);
 
-  const handleViewProfile = () => {
-    // Redirection vers la page profil
-    window.location.href = '/profile';
+  const handleProfilClick = () => {
+    navigate('/profil');
     setIsDropdownOpen(false);
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
     setShowLogoutModal(true);
     setIsDropdownOpen(false);
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    // Utiliser la fonction logout du contexte
+    logout();
+    
+    // Mettre à jour l'état local si nécessaire
     setUserName('Utilisateur');
     
     if (onUserUpdate) {
       onUserUpdate(null);
     }
-    
-    window.location.href = '/';
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleNotificationsClick = () => {
@@ -123,7 +133,7 @@ const Navbar = ({ userData, onUserUpdate }) => {
       position: "relative",
       boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
       animation: "scaleIn 0.3s ease",
-      borderTop: "6px solid #2563eb", // Style info (bleu)
+      borderTop: "6px solid #2563eb",
     };
   };
 
@@ -231,13 +241,14 @@ const Navbar = ({ userData, onUserUpdate }) => {
               {isDropdownOpen && (
                 <div className="userDropdown">
                   <div className="dropdownUserInfo">
+                    {/* Informations supplémentaires si nécessaire */}
                   </div>
-                  <button className="dropdownItem" onClick={handleViewProfile}>
+                  <button className="dropdownItem" onClick={handleProfilClick}>
                     <FaRegUser size={20}/>
                     <span>Mon profil</span>
                   </button>
                   <div className="dropdownDivider"></div>
-                  <button className="dropdownItem logout" onClick={handleLogout}>
+                  <button className="dropdownItem logout" onClick={handleLogoutClick}>
                     <CiLogout size={20}/>
                     <span>Déconnexion</span>
                   </button>
@@ -262,7 +273,7 @@ const Navbar = ({ userData, onUserUpdate }) => {
             zIndex: "9999",
             animation: "fadeIn 0.25s ease",
           }}
-          onClick={() => setShowLogoutModal(false)}
+          onClick={cancelLogout}
         >
           <div 
             style={getModalStyle()}
@@ -281,7 +292,7 @@ const Navbar = ({ userData, onUserUpdate }) => {
                 transition: "color 0.2s",
                 outline: "none",
               }}
-              onClick={() => setShowLogoutModal(false)}
+              onClick={cancelLogout}
               onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
               onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
             >
@@ -325,7 +336,7 @@ const Navbar = ({ userData, onUserUpdate }) => {
               </button>
               <button 
                 style={getCancelButtonStyle()}
-                onClick={() => setShowLogoutModal(false)}
+                onClick={cancelLogout}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "#f3f4f6";
                   e.currentTarget.style.transform = "translateY(-1px)";

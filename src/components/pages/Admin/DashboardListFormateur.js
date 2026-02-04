@@ -12,7 +12,7 @@ import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 
 import Navbar from "../../Navbar";
-import "./styles/UserValidation.css";
+import "./styles/FormateurDashboard.css";
 
 function TrainerManagement() {
 

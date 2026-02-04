@@ -129,7 +129,7 @@ function TrainerManagement() {
       setDeleting(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${API_URL}/${trainerToDelete.id}`, {
+      const response = await fetch(`http://192.168.2.161:5000/api/users/${trainerToDelete.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`

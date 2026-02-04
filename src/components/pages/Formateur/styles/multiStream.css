@@ -1,0 +1,102 @@
+/* Container principal */
+.multiStreamContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f4f7fb, #e9eff6);
+  padding: 30px 40px;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* Titre */
+.multiStreamContainer h2 {
+  margin-bottom: 24px;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Grid des streams */
+.multiStreamGrid {
+  display: grid;
+  gap: 24px;
+}
+
+/* Carte stream */
+.streamCard {
+  background: #0b1220;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.streamCard:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Header du stream */
+.streamHeader {
+  background: linear-gradient(90deg, #01628f, #0284c7);
+  color: #ffffff;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Badge LIVE */
+.streamHeader::after {
+  content: "LIVE";
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #dc2626;
+  padding: 4px 8px;
+  border-radius: 999px;
+  animation: pulse 1.5s infinite;
+}
+
+/* Canvas vidéo */
+.streamCanvas {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  background: #000;
+  display: block;
+  object-fit: contain;
+}
+
+/* Pulse LIVE */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .multiStreamContainer {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .multiStreamGrid {
+    grid-template-columns: 1fr !important;
+  }
+}

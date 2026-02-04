@@ -20,6 +20,7 @@ import Vrhboard from "./components/pages/Admin/VRDashboard";
 import AdminDashboard from "./components/pages/Admin/Dashboard";
 import AdminDashboardListFormateur from "./components/pages/Admin/DashboardListFormateur";
 import AjoutProfilStagiaire from "./components/pages/Admin/ajoutProfilStagiaire";
+import AjoutProfilFormateur from "./components/pages/Admin/ajoutProfilFormateur";
 
 // Profil
 import Profile from "./components/profil/profil";
@@ -51,6 +52,7 @@ function App() {
             <Route path="/admin/dashboardList" element={<AdminDashboard />} />
             <Route path="/admin/dashboardListFormateur" element={<AdminDashboardListFormateur />} />
             <Route path="/stagiaire/ajouter" element={<AjoutProfilStagiaire />} />
+            <Route path="/formateur/ajouter" element={<AjoutProfilFormateur />} />
           </Route>
 
           {/* Route profil - accessible à tous les rôles connectés */}

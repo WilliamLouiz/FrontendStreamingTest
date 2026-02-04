@@ -9,6 +9,8 @@ import { ImSpinner11 } from "react-icons/im";
 import { CiEdit } from "react-icons/ci";
 import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
 
+import { useNavigate } from 'react-router-dom';
+
 import Navbar from "../../Navbar";
 import "./styles/UserValidation.css";
 
@@ -20,7 +22,7 @@ function TrainerManagement() {
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [profileStatus, setProfileStatus] = useState(true);
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   // ===============================
   // LOAD USERS (JWT PROTECTED)
   // ===============================
@@ -99,9 +101,11 @@ function TrainerManagement() {
     setProfileStatus(trainer.status === "active");
   };
 
-  const handleAddTrainer = () => {
-    alert("Ajouter un utilisateur");
+  const handleAddTrainer = (e) => {
+   e.stopPropagation();
+  navigate(`/formateur/ajouter`);
   };
+
 
   const handleEdit = (id, e) => {
     e.stopPropagation();

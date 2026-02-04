@@ -1,9 +1,9 @@
-// ProfilStagiaire.jsx
+// ProfilFormateur.jsx
 import React, { useState } from 'react';
 import Navbar from '../../Navbar';
 import { useNavigate } from 'react-router-dom';
 
-const ProfilStagiaire = () => {
+const ProfilFormateur = () => {
     const navigate = useNavigate();
     const API_URL = "http://192.168.2.161:5000/api/auth/register";
 
@@ -13,7 +13,7 @@ const ProfilStagiaire = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'stagiaire' // Rôle fixe
+        role: 'formateur' // Rôle fixe
     });
 
     const [showSuccess, setShowSuccess] = useState(false);
@@ -92,7 +92,7 @@ const ProfilStagiaire = () => {
                     prenom: formData.prenom,
                     email: formData.email,
                     password: formData.password,
-                    role: "stagiaire",
+                    role: "formateur",
                 }),
             });
 
@@ -108,7 +108,7 @@ const ProfilStagiaire = () => {
                     email: '',
                     password: '',
                     confirmPassword: '',
-                    role: 'stagiaire'
+                    role: 'formateur'
                 });
 
                 // Rediriger après 2 secondes
@@ -148,7 +148,7 @@ const ProfilStagiaire = () => {
 
                 {showSuccess && (
                     <div style={{...styles.successMessage, display: 'block'}}>
-                        ✓ Stagiaire enregistré avec succès ! Redirection vers la connexion...
+                        ✓ formateur enregistré avec succès ! Redirection vers la connexion...
                     </div>
                 )}
 
@@ -163,7 +163,7 @@ const ProfilStagiaire = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" height="32px" viewBox="0 -960 960 960" width="32px" fill="#2c5f7c">
                             <path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm246-164q-59 0-99.5-40.5T340-580q0-59 40.5-99.5T480-720q59 0 99.5 40.5T620-580q0 59-40.5 99.5T480-440Zm0 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/>
                         </svg>
-                        <span>Nouveau stagiaire</span>
+                        <span>Nouveau formateur</span>
                     </div>
                 </div>
 
@@ -299,7 +299,7 @@ const ProfilStagiaire = () => {
                                 <span>Enregistrement...</span>
                             ) : (
                                 <>
-                                    <span>CRÉER COMPTE STAGIAIRE</span>
+                                    <span>CRÉER COMPTE formateur</span>
                                     <span style={styles.arrows}>»</span>
                                 </>
                             )}
@@ -465,4 +465,4 @@ const styles = {
     }
 };
 
-export default ProfilStagiaire;
+export default ProfilFormateur;

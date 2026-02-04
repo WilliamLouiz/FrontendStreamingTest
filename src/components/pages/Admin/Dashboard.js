@@ -21,6 +21,9 @@ function TrainerManagement() {
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [profileStatus, setProfileStatus] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [trainerToDelete, setTrainerToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
 
   // ===============================
@@ -64,6 +67,7 @@ function TrainerManagement() {
         name: `${user.nom} ${user.prenom}`,
         email: user.email,
         login: user.login,
+        stagiaire_id: user.stagiaire_id || user.stagiaiaire_id || "",
         status: user.status === "active" ? "active" : "inactive",
         selected: false
       }));
@@ -102,34 +106,62 @@ function TrainerManagement() {
   };
 
   const handleAddTrainer = (e) => {
-   e.stopPropagation();
-  navigate(`/stagiaire/ajouter`);
+    e.stopPropagation();
+    navigate(`/stagiaire/ajouter`);
   };
 
   const handleEdit = (id, e) => {
     e.stopPropagation();
-    alert(`Modifier utilisateur ID : ${id}`);
+    navigate(`/stagiaire/modifier/${id}`);
   };
 
-  const handleDelete = async (id, e) => {
+  const handleDeleteClick = (id, e) => {
     e.stopPropagation();
+    const trainer = trainers.find(t => t.id === id);
+    setTrainerToDelete(trainer);
+    setShowDeletePopup(true);
+  };
 
-    if (!window.confirm("Supprimer cet utilisateur ?")) return;
+  const confirmDelete = async () => {
+    if (!trainerToDelete) return;
 
     try {
-      await fetch(`${API_URL}/${id}`, {
+      setDeleting(true);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}/${trainerToDelete.id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${token}`
         }
       });
 
-      setTrainers(prev => prev.filter(t => t.id !== id));
-      setSelectedTrainer(null);
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression");
+      }
 
-    } catch {
-      alert("Erreur lors de la suppression");
+      // Supprimer de la liste
+      setTrainers(prev => prev.filter(t => t.id !== trainerToDelete.id));
+      
+      // Si l'utilisateur supprimé est celui sélectionné, désélectionner
+      if (selectedTrainer && selectedTrainer.id === trainerToDelete.id) {
+        setSelectedTrainer(null);
+      }
+
+      // Fermer la popup
+      setShowDeletePopup(false);
+      setTrainerToDelete(null);
+
+    } catch (error) {
+      alert("Erreur lors de la suppression : " + error.message);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeletePopup(false);
+    setTrainerToDelete(null);
   };
 
   const handleResetPassword = () => {
@@ -143,7 +175,66 @@ function TrainerManagement() {
   };
 
   const handleViewMore = () => {
-    alert("Voir plus de détails");
+    if (selectedTrainer) {
+      navigate(`/stagiaire/details/${selectedTrainer.id}`);
+    }
+  };
+
+  // ===============================
+  // RENDER DELETE POPUP
+  // ===============================
+  const renderDeletePopup = () => {
+    if (!showDeletePopup || !trainerToDelete) return null;
+
+    return (
+      <div className="popup-overlay">
+        <div className="delete-popup">
+          <div className="popup-header">
+            <h3>Confirmer la suppression</h3>
+            <button className="close-popup" onClick={cancelDelete}>
+              <IoClose size={24} />
+            </button>
+          </div>
+          
+          <div className="popup-content">
+            <div className="delete-icon">
+              <RiDeleteBin6Line size={60} color="#ff4757" />
+            </div>
+            
+            <p>Êtes-vous sûr de vouloir supprimer l'utilisateur :</p>
+            <p><strong>{trainerToDelete.name}</strong> ?</p>
+            
+            <p className="warning-text">
+              ⚠️ Cette action est irréversible. Toutes les données associées à cet utilisateur seront perdues.
+            </p>
+          </div>
+          
+          <div className="popup-actions">
+            <button 
+              className="btn-cancel" 
+              onClick={cancelDelete}
+              disabled={deleting}
+            >
+              Annuler
+            </button>
+            <button 
+              className="btn-confirm-delete" 
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <span className="spinner"></span>
+                  Suppression...
+                </>
+              ) : (
+                "Confirmer la suppression"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // ===============================
@@ -165,13 +256,14 @@ function TrainerManagement() {
             </div>
 
             <button className="btn-add" onClick={handleAddTrainer}>
-              AJOUTER UN FORMATEUR <FiUserPlus size={20} />
+              AJOUTER UN STAGIAIRE <FiUserPlus size={20} />
             </button>
           </div>
 
           <div className="table-header">
             <div></div>
             <div>Utilisateur</div>
+            <div>Stagiaire id</div>
             <div>Statut</div>
             <div>Action</div>
           </div>
@@ -194,7 +286,7 @@ function TrainerManagement() {
           {!loading && trainers.length > 0 && trainers.map(trainer => (
             <div
               key={trainer.id}
-              className={`trainer-row ${trainer.selected ? "selected" : ""}`}
+              className={`trainer-row ${selectedTrainer?.id === trainer.id ? "selected" : ""}`}
               onClick={(e) => handleRowClick(trainer.id, e)}
             >
               <input
@@ -207,6 +299,11 @@ function TrainerManagement() {
               <div className="trainer-name">
                 <FaRegUser size={25} />
                 <span>{trainer.name}</span>
+              </div>
+
+              {/* Cellule pour l'ID stagiaire */}
+              <div className="stagiaire-id-cell">
+                {trainer.stagiaire_id || "N/A"}
               </div>
 
               <div className={`status-icon status-${trainer.status}`}>
@@ -226,7 +323,7 @@ function TrainerManagement() {
 
                 <button
                   className="btn-action btn-delete"
-                  onClick={(e) => handleDelete(trainer.id, e)}
+                  onClick={(e) => handleDeleteClick(trainer.id, e)}
                 >
                   <RiDeleteBin6Line size={22} color="#fff" />
                 </button>
@@ -274,6 +371,17 @@ function TrainerManagement() {
                 />
               </div>
 
+              {/* Ajout de l'ID stagiaire dans le profil */}
+              <div className="form-group">
+                <label className="form-label">Stagiaire ID</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={selectedTrainer.stagiaire_id || "N/A"}
+                  readOnly
+                />
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Mot de passe</label>
                 <button className="btn-reset" onClick={handleResetPassword}>
@@ -302,6 +410,9 @@ function TrainerManagement() {
 
         </div>
       </div>
+
+      {/* DELETE CONFIRMATION POPUP */}
+      {renderDeletePopup()}
     </div>
   );
 }

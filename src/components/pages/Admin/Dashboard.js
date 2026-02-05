@@ -16,6 +16,8 @@ import "./styles/UserValidation.css";
 function TrainerManagement() {
 
   const API_URL = "http://192.168.2.161:5000/api/users/stagiaires";
+  const DELETE_URL = "http://192.168.2.161:5000/api/users/";
+  const VALIDATE_API_URL = "http://192.168.2.161:5000/api/admin/users";
 
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
@@ -25,6 +27,9 @@ function TrainerManagement() {
   const [trainerToDelete, setTrainerToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectEmailOption, setRejectEmailOption] = useState("true");
 
   // ===============================
   // LOAD USERS (JWT PROTECTED)
@@ -49,7 +54,6 @@ function TrainerManagement() {
 
       const result = await response.json();
 
-      // ❌ Unauthorized
       if (response.status === 401) {
         console.error("401 - Unauthorized");
         setTrainers([]);
@@ -69,7 +73,10 @@ function TrainerManagement() {
         login: user.login,
         stagiaire_id: user.stagiaire_id || user.stagiaiaire_id || "",
         status: user.status === "active" ? "active" : "inactive",
-        selected: false
+        selected: false,
+        // Récupérer le statut de validation depuis l'API
+        is_validated: user.is_validated || false, // ou validated selon la réponse de l'API
+        validated: user.validated || false
       }));
 
       setTrainers(formattedUsers);
@@ -80,6 +87,121 @@ function TrainerManagement() {
       setTrainers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ===============================
+  // VALIDER UN COMPTE
+  // ===============================
+  const handleValidateAccount = async () => {
+    if (!selectedTrainer) return;
+
+    if (!window.confirm(`Valider le compte de ${selectedTrainer.name} ?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${VALIDATE_API_URL}/${selectedTrainer.id}/validate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Compte validé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
+
+        // Mettre à jour le statut dans la liste
+        setTrainers(prev =>
+          prev.map(trainer =>
+            trainer.id === selectedTrainer.id
+              ? { ...trainer, is_validated: true, validated: true, status: "active" }
+              : trainer
+          )
+        );
+
+        // Mettre à jour le trainer sélectionné
+        setSelectedTrainer(prev =>
+          prev ? { ...prev, is_validated: true, validated: true, status: "active" } : prev
+        );
+
+        setProfileStatus(true);
+      } else {
+        alert(`Erreur: ${result.message || "Échec de la validation"}`);
+      }
+    } catch (error) {
+      console.error("Erreur validation:", error);
+      alert("Erreur lors de la validation du compte");
+    }
+  };
+
+  // ===============================
+  // REFUSER UN COMPTE
+  // ===============================
+  const handleRejectAccount = async () => {
+    if (!selectedTrainer) return;
+
+    if (!rejectReason.trim()) {
+      alert("Veuillez saisir la raison du refus");
+      return;
+    }
+
+    if (!window.confirm(`Refuser le compte de ${selectedTrainer.name} ?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${VALIDATE_API_URL}/${selectedTrainer.id}/reject`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            reason: rejectReason,
+            sendEmail: rejectEmailOption === "true"
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Compte refusé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
+
+        // Mettre à jour le statut dans la liste
+        setTrainers(prev =>
+          prev.map(trainer =>
+            trainer.id === selectedTrainer.id
+              ? { ...trainer, is_validated: false, validated: false, status: "inactive" }
+              : trainer
+          )
+        );
+
+        // Mettre à jour le trainer sélectionné
+        setSelectedTrainer(prev =>
+          prev ? { ...prev, is_validated: false, validated: false, status: "inactive" } : prev
+        );
+
+        setProfileStatus(false);
+        setShowRejectForm(false);
+        setRejectReason("");
+      } else {
+        alert(`Erreur: ${result.message || "Échec du refus"}`);
+      }
+    } catch (error) {
+      console.error("Erreur refus:", error);
+      alert("Erreur lors du refus du compte");
     }
   };
 
@@ -103,6 +225,9 @@ function TrainerManagement() {
     const trainer = trainers.find(t => t.id === id);
     setSelectedTrainer(trainer);
     setProfileStatus(trainer.status === "active");
+    // Réinitialiser le formulaire de refus lors du changement d'utilisateur
+    setShowRejectForm(false);
+    setRejectReason("");
   };
 
   const handleAddTrainer = (e) => {
@@ -129,7 +254,7 @@ function TrainerManagement() {
       setDeleting(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`http://192.168.2.161:5000/api/users/${trainerToDelete.id}`, {
+      const response = await fetch(`${DELETE_URL}${trainerToDelete.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`
@@ -142,7 +267,7 @@ function TrainerManagement() {
 
       // Supprimer de la liste
       setTrainers(prev => prev.filter(t => t.id !== trainerToDelete.id));
-      
+
       // Si l'utilisateur supprimé est celui sélectionné, désélectionner
       if (selectedTrainer && selectedTrainer.id === trainerToDelete.id) {
         setSelectedTrainer(null);
@@ -195,30 +320,30 @@ function TrainerManagement() {
               <IoClose size={24} />
             </button>
           </div>
-          
+
           <div className="popup-content">
             <div className="delete-icon">
               <RiDeleteBin6Line size={60} color="#ff4757" />
             </div>
-            
+
             <p>Êtes-vous sûr de vouloir supprimer l'utilisateur :</p>
             <p><strong>{trainerToDelete.name}</strong> ?</p>
-            
+
             <p className="warning-text">
-              ⚠️ Cette action est irréversible. Toutes les données associées à cet utilisateur seront perdues.
+              Cette action est irréversible. Toutes les données associées à cet utilisateur seront perdues.
             </p>
           </div>
-          
+
           <div className="popup-actions">
-            <button 
-              className="btn-cancel" 
+            <button
+              className="btn-cancel"
               onClick={cancelDelete}
               disabled={deleting}
             >
               Annuler
             </button>
-            <button 
-              className="btn-confirm-delete" 
+            <button
+              className="btn-confirm-delete"
               onClick={confirmDelete}
               disabled={deleting}
             >
@@ -264,7 +389,7 @@ function TrainerManagement() {
             <div></div>
             <div>Utilisateur</div>
             <div>Stagiaire id</div>
-            <div>Statut</div>
+            <div>Validé</div>
             <div>Action</div>
           </div>
 
@@ -286,7 +411,7 @@ function TrainerManagement() {
           {!loading && trainers.length > 0 && trainers.map(trainer => (
             <div
               key={trainer.id}
-              className={`trainer-row ${selectedTrainer?.id === trainer.id ? "selected" : ""}`}
+              className={`trainer-row ${trainer.selected ? "selected" : ""}`}
               onClick={(e) => handleRowClick(trainer.id, e)}
             >
               <input
@@ -306,8 +431,13 @@ function TrainerManagement() {
                 {trainer.stagiaire_id || "N/A"}
               </div>
 
-              <div className={`status-icon status-${trainer.status}`}>
-                {trainer.status === "active"
+              <div
+                className="status-icon"
+                style={{
+                  backgroundColor: trainer.is_validated ? '#27ae60' : 'red'
+                }}
+              >
+                {trainer.is_validated
                   ? <IoCheckmarkOutline size={22} color="white" />
                   : <IoClose size={22} color="white" />
                 }
@@ -361,16 +491,6 @@ function TrainerManagement() {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Login</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={selectedTrainer.login || ""}
-                  readOnly
-                />
-              </div>
-
               {/* Ajout de l'ID stagiaire dans le profil */}
               <div className="form-group">
                 <label className="form-label">Stagiaire ID</label>
@@ -389,13 +509,105 @@ function TrainerManagement() {
                 </button>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Statut</label>
-                <div
-                  className={`toggle-switch ${profileStatus ? "active" : ""}`}
-                  onClick={() => setProfileStatus(!profileStatus)}
-                ></div>
-              </div>
+              {/* SECTION VALIDATION - Affichée uniquement si le compte n'est pas validé */}
+              {!selectedTrainer.is_validated && (
+                <div className="validation-section">
+                  <div className="validation-info">
+                    <span className="validation-alert"></span>
+                    <span className="validation-text">
+                      Ce compte n'est pas encore validé. Veuillez approuver ou refuser l'accès.
+                    </span>
+                  </div>
+
+                  {/* BADGES BOUTONS VALIDER/REFUSER */}
+                  <div className="validation-buttons-container">
+                    <button
+                      className="btn-validate"
+                      onClick={handleValidateAccount}
+                    >
+                      VALIDER LE COMPTE
+                    </button>
+
+                    <button
+                      className="btn-reject"
+                      onClick={() => setShowRejectForm(!showRejectForm)}
+                    >
+                      REFUSER LE COMPTE
+                    </button>
+                  </div>
+
+                  {/* FORMULAIRE DE RAISON DE REFUS */}
+                  {showRejectForm && (
+                    <div className="reject-form">
+                      <div className="form-group">
+                        <label className="form-label">Raison du refus *</label>
+                        <textarea
+                          className="form-textarea"
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                          placeholder="Veuillez saisir la raison du refus..."
+                          rows="4"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Envoyer un email ?</label>
+                        <div className="radio-group">
+                          <label className="radio-label">
+                            <input
+                              type="radio"
+                              name="sendEmail"
+                              value="true"
+                              checked={rejectEmailOption === "true"}
+                              onChange={(e) => setRejectEmailOption(e.target.value)}
+                            />
+                            Oui
+                          </label>
+                          <label className="radio-label">
+                            <input
+                              type="radio"
+                              name="sendEmail"
+                              value="false"
+                              checked={rejectEmailOption === "false"}
+                              onChange={(e) => setRejectEmailOption(e.target.value)}
+                            />
+                            Non
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="reject-form-actions">
+                        <button
+                          className="btn-submit-reject"
+                          onClick={handleRejectAccount}
+                          disabled={!rejectReason.trim()}
+                        >
+                          CONFIRMER LE REFUS
+                        </button>
+                        <button
+                          className="btn-cancel-reject"
+                          onClick={() => {
+                            setShowRejectForm(false);
+                            setRejectReason("");
+                          }}
+                        >
+                          ANNULER
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Afficher un message si le compte est déjà validé */}
+              {selectedTrainer.is_validated && (
+                <div className="validation-status-message validated">
+                  <span className="status-icon-check"></span>
+                  <span className="status-text">
+                    Ce compte a été validé et est actif.
+                  </span>
+                </div>
+              )}
 
               <button className="voir-plus-btn" onClick={handleViewMore}>
                 <span>VOIR PLUS</span>

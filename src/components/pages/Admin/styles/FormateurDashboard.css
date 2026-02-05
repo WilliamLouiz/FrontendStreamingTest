@@ -1,0 +1,570 @@
+/* UserValidation.css */
+
+/* ================= ANIMATIONS ================= */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= UTILITY CLASSES ================= */
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-bg:hover {
+  background-color: #f7fafc;
+}
+
+/* ================= MAIN CONTAINER ================= */
+.mainContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #003249 0%, #006A9B 100%);
+  padding-bottom: 30px;
+}
+
+/* ================= CONTENT CONTAINER ================= */
+.contentContainer {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 30px;
+  margin: 30px auto;
+  padding: 0 24px;
+}
+
+/* ================= CARD STYLES ================= */
+.card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  animation: slideDown 0.3s ease-out;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #01628F;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.card-title span {
+  font-size: 24px !important;
+}
+
+/* ================= ADD BUTTON ================= */
+.btn-add {
+  background: white;
+  color: #01628F;
+  border: 2px solid #01628F;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-add:hover {
+  background: #01628F;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(1, 98, 143, 0.3);
+}
+
+/* ================= TABLE HEADER (4 COLUMNS) ================= */
+.table-header {
+  display: grid;
+  grid-template-columns: 50px 1fr 100px 120px; /* 4 colonnes seulement */
+  gap: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #01628F;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.table-header div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-header div:first-child {
+  justify-content: flex-start;
+}
+
+.table-header div:nth-child(2) {
+  justify-content: flex-start;
+}
+
+/* ================= TRAINER ROWS (4 COLUMNS) ================= */
+.trainer-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 100px 120px; /* 4 colonnes seulement */
+  gap: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.trainer-row:hover {
+  background: #f8f9fa;
+  transform: translateX(5px);
+}
+
+.trainer-row.selected {
+  background: #e3f2fd;
+  border-left: 4px solid #01628F;
+  box-shadow: 0 2px 8px rgba(1, 98, 143, 0.1);
+}
+
+/* ================= CHECKBOX ================= */
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #01628F;
+  margin: 0;
+}
+
+/* ================= TRAINER NAME ================= */
+.trainer-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #01628F;
+  font-weight: 500;
+  justify-content: flex-start;
+}
+
+/* ================= STATUS ICONS ================= */
+.status-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  margin: 0 auto;
+  transition: transform 0.3s;
+}
+
+.status-icon:hover {
+  transform: scale(1.1);
+}
+
+.status-active {
+  background: #27ae60;
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.status-inactive {
+  background: #e74c3c;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+/* ================= ACTION BUTTONS ================= */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.btn-action {
+  width: 35px;
+  height: 35px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.3s;
+}
+
+.btn-edit {
+  background: #27ae60;
+}
+
+.btn-edit:hover {
+  background: #229954;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+.btn-delete {
+  background: #e74c3c;
+}
+
+.btn-delete:hover {
+  background: #c0392b;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+/* ================= PROFILE CARD ================= */
+.profile-card {
+  text-align: center;
+}
+
+.profile-title {
+  color: #01628F;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 15px;
+}
+
+.profile-name {
+  color: #01628F;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.form-label {
+  color: #01628F;
+  font-weight: 600;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.form-input {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #7f8c8d;
+  text-align: right;
+  padding: 5px 0;
+  flex-grow: 1;
+  margin-left: 20px;
+  max-width: calc(100% - 120px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form-input:focus {
+  outline: none;
+  color: #2c3e50;
+}
+
+.form-input:disabled {
+  background-color: transparent;
+  color: #7f8c8d;
+  cursor: not-allowed;
+}
+
+.btn-reset {
+  background: white;
+  color: #01628F;
+  border: 2px solid #01628F;
+  padding: 8px 16px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  margin-left: 20px;
+  max-width: calc(100% - 120px);
+}
+
+.btn-reset:hover {
+  background: #01628F;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(1, 98, 143, 0.3);
+}
+
+/* ================= TOGGLE SWITCH ================= */
+.toggle-switch {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: #e74c3c;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-left: 20px;
+}
+
+.toggle-switch.active {
+  background: #27ae60;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active::after {
+  left: 32px;
+}
+
+.toggle-switch:hover::after {
+  transform: scale(1.1);
+}
+
+/* ================= VOIR PLUS BUTTON ================= */
+.voir-plus-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 18px 50px;
+  background: linear-gradient(180deg, #6dd5ed 0%, #2193b0 100%);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 15px rgba(33, 147, 176, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-decoration: none;
+  margin-top: 30px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.voir-plus-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(180deg, #e0f7fa 0%, #b2ebf2 100%);
+  border-radius: 14px;
+  z-index: -1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.voir-plus-btn::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: white;
+  border-radius: 16px;
+  z-index: -2;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.arrows {
+  display: flex;
+  gap: 3px;
+  font-size: 22px;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.voir-plus-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(33, 147, 176, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.voir-plus-btn:hover .arrows {
+  transform: translateX(5px);
+}
+
+.voir-plus-btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 10px rgba(33, 147, 176, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ================= EMPTY MESSAGE ================= */
+.empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+  font-style: italic;
+  grid-column: 1 / -1;
+}
+
+/* ================= RESPONSIVE DESIGN ================= */
+@media (max-width: 1200px) {
+  .contentContainer {
+    grid-template-columns: 1fr;
+    max-width: 900px;
+  }
+  
+  .profile-card {
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .contentContainer {
+    padding: 0 15px;
+    gap: 20px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+  
+  .table-header,
+  .trainer-row {
+    grid-template-columns: 40px 1fr 80px 100px; /* 4 colonnes responsive */
+    gap: 10px;
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .btn-add,
+  .btn-reset {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .voir-plus-btn {
+    padding: 12px 30px;
+    font-size: 15px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .card-title span {
+    font-size: 20px !important;
+  }
+  
+  .profile-title {
+    font-size: 20px;
+  }
+  
+  .profile-name {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .table-header,
+  .trainer-row {
+    grid-template-columns: 30px 1fr 70px 90px; /* 4 colonnes mobile */
+    font-size: 12px;
+  }
+  
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .form-label {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .form-input,
+  .btn-reset {
+    margin-left: 0;
+    max-width: 100%;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .toggle-switch {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-header,
+  .trainer-row {
+    grid-template-columns: 25px 1fr 60px 80px; /* 4 colonnes très petit écran */
+    gap: 5px;
+    font-size: 11px;
+  }
+  
+  .btn-add {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  
+  .card-title {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .card-title span {
+    font-size: 18px !important;
+  }
+  
+  .voir-plus-btn {
+    padding: 15px 20px;
+    font-size: 14px;
+    gap: 10px;
+  }
+}

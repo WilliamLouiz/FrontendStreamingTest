@@ -10,6 +10,7 @@ import Register from "./components/Auth/register";
 // Formateur
 import FormateurAccueil from "./components/pages/Formateur/Accueil";
 import FormateurMultiVideo from "./components/pages/Formateur/multiVideo";
+import FormateurMultiStream from "./components/pages/Formateur/multiStream";
 import FormateurSeulStream from "./components/pages/Formateur/seulStream";
 
 // Stagiaire
@@ -38,7 +39,8 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={['formateur']} />}>
             <Route path="/formateur/accueil" element={<FormateurAccueil />} />
             <Route path="/formateur/live" element={<FormateurMultiVideo />} />
-            <Route path="/formateur/detail" element={<FormateurSeulStream />} />
+            <Route path="/formateur/multiStream" element={<FormateurMultiStream />} />
+            <Route path="/detail" element={<FormateurSeulStream />} />
           </Route>
 
           {/* Routes pour Stagiaire */}

@@ -14,6 +14,7 @@ function Accueil() {
   const [videoTime, setVideoTime] = useState(900);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [status, setStatus] = useState('disconnected');
+  const selectedChannels = channels.filter(c => c.isSelected);
 
   // WebSocket - MÊME LOGIQUE QUE MultiVideo
   const [ws, setWs] = useState(null);
@@ -98,9 +99,9 @@ function Accueil() {
   };
 
   // Fonction pour récupérer les infos des stagiaires depuis l'API
-  const fetchStagiaireInfo = async (stagiaireId) => {
+  const fetchStagiaireInfo = async (userId) => {
     try {
-      if (!stagiaireId) return null;
+      if (!userId) return null;
 
       const response = await fetch('/api/verify-stagiaire', {
         method: 'POST',
@@ -108,7 +109,7 @@ function Accueil() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ stagiaireId: stagiaireId })
+        body: JSON.stringify({ userId: userId })
       });
 
       if (!response.ok) throw new Error('Erreur API');
@@ -116,7 +117,7 @@ function Accueil() {
       const data = await response.json();
 
       if (data.success) {
-        return data.user; // Retourne { id, nom, prenom, stagiaire_id }
+        return data.user;
       }
 
       return null;
@@ -127,44 +128,34 @@ function Accueil() {
   };
 
   // fonction pour enrichir les channels avec les infos stagiaires
-  const enrichChannelsWithStagiaireInfo = async (channels) => {
-    const enrichedChannels = [];
-
-    for (const channel of channels) {
+  const enrichChannelsWithStagiaireInfo = (channels) => {
+    return channels.map(channel => {
+      // Le serveur a déjà fait l'association, on a juste besoin de formater
       const channelCopy = { ...channel };
 
-      // Si Unity a envoyé stagiaireId dans metadata
-      if (channel.metadata && channel.metadata.stagiaireId) {
-        const stagiaireInfo = await fetchStagiaireInfo(channel.metadata.stagiaireId);
-
-        if (stagiaireInfo) {
-          channelCopy.stagiaire = {
-            nom: stagiaireInfo.nom,
-            prenom: stagiaireInfo.prenom,
-            fullName: `${stagiaireInfo.prenom} ${stagiaireInfo.nom}`,
-            stagiaireId: stagiaireInfo.stagiaire_id
-          };
-          channelCopy.name = `Casque ${channel.id} - ${stagiaireInfo.prenom} ${stagiaireInfo.nom}`;
-        } else {
-          channelCopy.stagiaire = null;
-          channelCopy.name = `Casque ${channel.id} - Non identifié`;
-        }
+      if (channel.user) {
+        channelCopy.stagiaire = {
+          nom: channel.user.nom,
+          prenom: channel.user.prenom,
+          fullName: `${channel.user.prenom} ${channel.user.nom}`,
+          stagiaireId: channel.user.stagiaire_id
+        };
+        channelCopy.name = channelCopy.stagiaire.fullName;
       } else {
         channelCopy.stagiaire = null;
-        channelCopy.name = `Casque ${channel.id}`;
+        channelCopy.name = `Casque ${channel.id} - Non authentifié`;
       }
 
-      // Ajouter les données générées (score, tâche, etc.)
+      // Ajouter les données générées
       channelCopy.score = generateScore(channel.id);
       channelCopy.task = generateTask(channel.id);
       channelCopy.memberSince = generateJoinDate(channel.id);
       channelCopy.viewerCount = channel.viewerCount || 0;
       channelCopy.isSelected = false;
+      channelCopy.authenticated = channel.authenticated || false;
 
-      enrichedChannels.push(channelCopy);
-    }
-
-    return enrichedChannels;
+      return channelCopy;
+    });
   };
 
   // Gérer les messages JSON 
@@ -174,26 +165,30 @@ function Accueil() {
     switch (msg.type) {
       case 'channels-list':
         try {
-          const enrichedChannels = await enrichChannelsWithStagiaireInfo(msg.channels);
+          // Le serveur a déjà fait l'association, on enrichit juste l'affichage
+          const enrichedChannels = enrichChannelsWithStagiaireInfo(msg.channels);
           setChannels(enrichedChannels);
 
-          // Sélectionner le premier canal actif par défaut
+          // Sélectionner le premier canal actif et authentifié par défaut
           if (enrichedChannels.length > 0 && !selectedChannel) {
-            const firstActiveChannel = enrichedChannels.find(ch => ch.active) || enrichedChannels[0];
+            const firstActiveChannel = enrichedChannels.find(ch => ch.active && ch.authenticated) ||
+              enrichedChannels.find(ch => ch.active) ||
+              enrichedChannels[0];
             setSelectedChannel(firstActiveChannel);
           }
         } catch (error) {
-          console.error('Erreur enrichissement channels:', error);
-
-          // Fallback: utiliser les données de base si erreur
+          console.error('Erreur traitement channels:', error);
+          // Fallback
           const fallbackChannels = msg.channels.map(channel => ({
-            id: channel.id,
-            name: `Casque ${channel.id}`,
-            ...generateChannelData(channel.id),
-            active: channel.active,
-            metadata: channel.metadata,
+            ...channel,
+            name: channel.user ?
+              `${channel.user.prenom} ${channel.user.nom}` :
+              `Casque ${channel.id}`,
+            score: generateScore(channel.id),
+            task: generateTask(channel.id),
+            memberSince: generateJoinDate(channel.id),
             viewerCount: channel.viewerCount || 0,
-            stagiaire: null // Pas d'info stagiaire
+            isSelected: false
           }));
 
           setChannels(fallbackChannels);
@@ -425,9 +420,19 @@ function Accueil() {
   };
 
   const handleCheckboxChange = (channelId) => {
-    const updatedChannels = channels.map(channel =>
-      channel.id === channelId ? { ...channel, isSelected: !channel.isSelected } : channel
+    const selectedCount = channels.filter(c => c.isSelected).length;
+    const channel = channels.find(c => c.id === channelId);
+
+    // Empêcher > 4
+    if (!channel.isSelected && selectedCount >= 4) {
+      alert("Vous pouvez sélectionner au maximum 4 stagiaires");
+      return;
+    }
+
+    const updatedChannels = channels.map(c =>
+      c.id === channelId ? { ...c, isSelected: !c.isSelected } : c
     );
+
     setChannels(updatedChannels);
   };
 
@@ -440,6 +445,12 @@ function Accueil() {
     if (!selectedChannel.active) {
       console.log('❌ Canal inactif');
       alert('Ce casque VR est actuellement hors ligne');
+      return;
+    }
+    // Vérifier si le canal est authentifié
+    if (!selectedChannel.authenticated) {
+      console.log('❌ Canal non authentifié');
+      alert('Ce casque VR n\'est pas authentifié. L\'utilisateur doit s\'identifier avec un ID valide.');
       return;
     }
 
@@ -666,7 +677,7 @@ function Accueil() {
             <thead>
               <tr className="tableHeader">
                 <th className="th checkboxColumn"></th>
-                <th className="th textLeft">Casque VR</th>
+                <th className="th textLeft">Utilisateur VR</th>
                 <th className="th textLeft">Tâche en cours</th>
                 <th className="th textCenter">Note</th>
                 <th className="th textCenter">Note validée</th>
@@ -724,30 +735,6 @@ function Accueil() {
                           <span className="userName2">
                             {channel.name}
                           </span>
-                          {channel.stagiaire && (
-                            <div className="stagiaire-info" style={{
-                              fontSize: '12px',
-                              color: '#4a5568',
-                              marginTop: '2px'
-                            }}>
-                              <span style={{ fontWeight: '500' }}>
-                                👤 {channel.stagiaire.fullName}
-                              </span>
-                              <span style={{ marginLeft: '8px', color: '#718096' }}>
-                                ID: {channel.stagiaire.stagiaireId}
-                              </span>
-                            </div>
-                          )}
-                          {channel.viewerCount > 0 && (
-                            <span style={{
-                              marginTop: '4px',
-                              fontSize: '11px',
-                              color: '#6b7280',
-                              display: 'block'
-                            }}>
-                              👥 {channel.viewerCount} spectateurs
-                            </span>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -772,12 +759,20 @@ function Accueil() {
           </table>
 
           <div className="buttonWrapper">
-            <Link to="/live" style={{ textDecoration: 'none' }}>
-              <button className="liveButton hover-green">
-                VOIR TOUS LES STREAMS
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+            <Link
+              to="/formateur/multiStream"
+              state={{ channels: selectedChannels }}
+              style={{ textDecoration: 'none' }}
+            >
+              <button
+                className="liveButton hover-green"
+                disabled={selectedChannels.length === 0}
+                style={{
+                  opacity: selectedChannels.length === 0 ? 0.5 : 1,
+                  cursor: selectedChannels.length === 0 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                VOIR TOUS LES STREAMS ({selectedChannels.length}/4)
               </button>
             </Link>
           </div>

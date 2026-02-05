@@ -113,21 +113,21 @@ function TrainerManagement() {
 
       if (response.ok) {
         alert(`Compte validé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
-        
+
         // Mettre à jour le statut dans la liste
-        setTrainers(prev => 
-          prev.map(trainer => 
-            trainer.id === selectedTrainer.id 
-              ? { ...trainer, is_validated: true, validated: true, status: "active" } 
+        setTrainers(prev =>
+          prev.map(trainer =>
+            trainer.id === selectedTrainer.id
+              ? { ...trainer, is_validated: true, validated: true, status: "active" }
               : trainer
           )
         );
-        
+
         // Mettre à jour le trainer sélectionné
-        setSelectedTrainer(prev => 
+        setSelectedTrainer(prev =>
           prev ? { ...prev, is_validated: true, validated: true, status: "active" } : prev
         );
-        
+
         setProfileStatus(true);
       } else {
         alert(`Erreur: ${result.message || "Échec de la validation"}`);
@@ -174,21 +174,21 @@ function TrainerManagement() {
 
       if (response.ok) {
         alert(`Compte refusé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
-        
+
         // Mettre à jour le statut dans la liste
-        setTrainers(prev => 
-          prev.map(trainer => 
-            trainer.id === selectedTrainer.id 
-              ? { ...trainer, is_validated: false, validated: false, status: "inactive" } 
+        setTrainers(prev =>
+          prev.map(trainer =>
+            trainer.id === selectedTrainer.id
+              ? { ...trainer, is_validated: false, validated: false, status: "inactive" }
               : trainer
           )
         );
-        
+
         // Mettre à jour le trainer sélectionné
-        setSelectedTrainer(prev => 
+        setSelectedTrainer(prev =>
           prev ? { ...prev, is_validated: false, validated: false, status: "inactive" } : prev
         );
-        
+
         setProfileStatus(false);
         setShowRejectForm(false);
         setRejectReason("");
@@ -227,8 +227,8 @@ function TrainerManagement() {
   };
 
   const handleAddTrainer = (e) => {
-   e.stopPropagation();
-  navigate(`/formateur/ajouter`);
+    e.stopPropagation();
+    navigate(`/formateur/ajouter`);
   };
 
 
@@ -298,6 +298,7 @@ function TrainerManagement() {
           <div className="table-header">
             <div></div>
             <div>Utilisateur</div>
+            <div>Validé</div>
             <div>Action</div>
           </div>
 
@@ -332,6 +333,18 @@ function TrainerManagement() {
               <div className="trainer-name">
                 <FaRegUser size={25} />
                 <span>{trainer.name}</span>
+              </div>
+
+              <div
+                className="status-icon"
+                style={{
+                  backgroundColor: trainer.is_validated ? '#27ae60' : 'red'
+                }}
+              >
+                {trainer.is_validated
+                  ? <IoCheckmarkOutline size={22} color="white" />
+                  : <IoClose size={22} color="white" />
+                }
               </div>
 
               <div className="action-buttons">
@@ -399,6 +412,14 @@ function TrainerManagement() {
                 </button>
               </div>
 
+              <div className="form-group">
+                <label className="form-label">Statut</label>
+                <div
+                  className={`toggle-switch ${profileStatus ? "active" : ""}`}
+                  onClick={() => setProfileStatus(!profileStatus)}
+                ></div>
+              </div>
+
               {/* SECTION VALIDATION - Affichée uniquement si le compte n'est pas validé */}
               {!selectedTrainer.is_validated && (
                 <div className="validation-section">
@@ -408,7 +429,7 @@ function TrainerManagement() {
                       Ce compte n'est pas encore validé. Veuillez approuver ou refuser l'accès.
                     </span>
                   </div>
-                  
+
                   {/* BADGES BOUTONS VALIDER/REFUSER */}
                   <div className="validation-buttons-container">
                     <button
@@ -417,7 +438,7 @@ function TrainerManagement() {
                     >
                       VALIDER LE COMPTE
                     </button>
-                    
+
                     <button
                       className="btn-reject"
                       onClick={() => setShowRejectForm(!showRejectForm)}
@@ -439,7 +460,7 @@ function TrainerManagement() {
                           rows="4"
                         />
                       </div>
-                      
+
                       <div className="form-group">
                         <label className="form-label">Envoyer un email ?</label>
                         <div className="radio-group">
@@ -465,7 +486,7 @@ function TrainerManagement() {
                           </label>
                         </div>
                       </div>
-                      
+
                       <div className="reject-form-actions">
                         <button
                           className="btn-submit-reject"

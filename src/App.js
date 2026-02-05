@@ -5,7 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import PrivateRoute from "./components/Auth/PrivateRoute";
 import Login from "./components/Auth/login";
 import Register from "./components/Auth/register";
-
+import ResetPassword from "./components/Auth/ResetPassword";
 // Pages pour chaque rôle
 // Formateur
 import FormateurAccueil from "./components/pages/Formateur/Accueil";
@@ -34,6 +34,7 @@ function App() {
           {/* Routes publiques */}
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Routes pour Formateur */}
           <Route element={<PrivateRoute allowedRoles={['formateur']} />}>

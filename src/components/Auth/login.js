@@ -504,7 +504,7 @@ const Login = () => {
 
     try {
       // Appel API pour mot de passe oublié
-      const response = await fetch('http://192.168.2.161:5000/api/auth/forgot-password', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://192.168.2.161:5000'}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

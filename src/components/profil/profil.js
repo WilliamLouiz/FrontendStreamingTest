@@ -1,12 +1,752 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-// import './profile.css';
 
 const ProfilePageV2 = () => {
   const navigate = useNavigate();
   const authContext = useAuth();
   
+  // Styles CSS en objets JavaScript
+  const styles = {
+    // Conteneur principal
+    profileV2: {
+      minHeight: '100vh',
+      background: '#f5f7fa',
+    },
+    
+    // Notifications
+    notificationsContainer: {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      zIndex: 1000,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+    },
+    
+    notification: {
+      background: 'white',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '12px',
+      minWidth: '300px',
+      animation: 'slideIn 0.3s ease',
+    },
+    
+    notificationSuccess: {
+      borderLeft: '4px solid #10B981',
+    },
+    
+    notificationError: {
+      borderLeft: '4px solid #EF4444',
+    },
+    
+    notificationWarning: {
+      borderLeft: '4px solid #F59E0B',
+    },
+    
+    notificationInfo: {
+      borderLeft: '4px solid #3B82F6',
+    },
+    
+    notificationClose: {
+      background: 'none',
+      border: 'none',
+      fontSize: '20px',
+      cursor: 'pointer',
+      color: '#6B7280',
+      padding: '0 4px',
+    },
+    
+    // Header
+    profileHeaderV2: {
+      background: 'white',
+      borderBottom: '1px solid #E5E7EB',
+      padding: '16px 24px',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+    },
+    
+    headerContainer: {
+      maxWidth: '1200px',
+      margin: '0 auto',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    
+    backBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      background: 'none',
+      border: 'none',
+      color: '#6B7280',
+      cursor: 'pointer',
+      fontSize: '14px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+    },
+    
+    pageTitle: {
+      fontSize: '24px',
+      fontWeight: 600,
+      color: '#1F2937',
+    },
+    
+    iconBtn: {
+      background: 'none',
+      border: 'none',
+      padding: '8px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      color: '#6B7280',
+    },
+    
+    // Conteneur principal
+    profileContainerV2: {
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '24px',
+      display: 'grid',
+      gridTemplateColumns: '280px 1fr',
+      gap: '24px',
+      minHeight: 'calc(100vh - 73px)',
+    },
+    
+    // Sidebar
+    profileSidebarV2: {
+      position: 'sticky',
+      top: '104px',
+      height: 'fit-content',
+    },
+    
+    profileCard: {
+      background: 'white',
+      borderRadius: '12px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      overflow: 'hidden',
+    },
+    
+    // Avatar
+    avatarSection: {
+      padding: '24px',
+      textAlign: 'center',
+      borderBottom: '1px solid #E5E7EB',
+    },
+    
+    avatarWrapper: {
+      position: 'relative',
+      width: '120px',
+      height: '120px',
+      margin: '0 auto 16px',
+      borderRadius: '50%',
+      overflow: 'hidden',
+      cursor: 'pointer',
+    },
+    
+    avatarImage: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+    },
+    
+    avatarPlaceholder: {
+      width: '100%',
+      height: '100%',
+      background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'white',
+      fontSize: '32px',
+      fontWeight: 600,
+    },
+    
+    avatarOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      opacity: 0,
+      transition: 'opacity 0.2s',
+    },
+    
+    userName: {
+      fontSize: '20px',
+      fontWeight: 600,
+      color: '#1F2937',
+      marginBottom: '4px',
+    },
+    
+    userRole: {
+      color: '#6B7280',
+      fontSize: '14px',
+      marginBottom: '16px',
+    },
+    
+    userMeta: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    },
+    
+    metaItem: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      color: '#6B7280',
+      fontSize: '13px',
+    },
+    
+    // Navigation
+    sidebarNav: {
+      padding: '16px',
+    },
+    
+    navBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      width: '100%',
+      padding: '12px 16px',
+      border: 'none',
+      background: 'none',
+      color: '#6B7280',
+      cursor: 'pointer',
+      borderRadius: '8px',
+      fontSize: '14px',
+      textAlign: 'left',
+      transition: 'all 0.2s',
+    },
+    
+    navBtnActive: {
+      background: '#EFF6FF',
+      color: '#3B82F6',
+      fontWeight: 500,
+    },
+    
+    navBtnLogout: {
+      color: '#EF4444',
+      marginTop: '8px',
+    },
+    
+    // Content Area
+    profileContentV2: {
+      minHeight: 'calc(100vh - 200px)',
+    },
+    
+    contentSection: {
+      background: 'white',
+      borderRadius: '12px',
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+      padding: '24px',
+      marginBottom: '24px',
+    },
+    
+    sectionTitle: {
+      fontSize: '20px',
+      fontWeight: 600,
+      color: '#1F2937',
+      marginBottom: '24px',
+    },
+    
+    // Stats Grid
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: '16px',
+      marginBottom: '32px',
+    },
+    
+    statCard: {
+      background: '#F9FAFB',
+      borderRadius: '8px',
+      padding: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+    },
+    
+    statIcon: {
+      width: '48px',
+      height: '48px',
+      borderRadius: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    
+    statContent: {
+      h3: {
+        fontSize: '24px',
+        fontWeight: 600,
+        color: '#1F2937',
+        marginBottom: '4px',
+      },
+      p: {
+        color: '#6B7280',
+        fontSize: '14px',
+      },
+    },
+    
+    // Progress Section
+    progressSection: {
+      marginBottom: '32px',
+    },
+    
+    progressTitle: {
+      fontSize: '16px',
+      fontWeight: 500,
+      marginBottom: '12px',
+      color: '#1F2937',
+    },
+    
+    progressBar: {
+      height: '8px',
+      background: '#E5E7EB',
+      borderRadius: '4px',
+      overflow: 'hidden',
+      marginBottom: '8px',
+    },
+    
+    progressFill: {
+      height: '100%',
+      background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)',
+      borderRadius: '4px',
+      transition: 'width 0.5s ease',
+    },
+    
+    progressLabels: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      color: '#6B7280',
+      fontSize: '12px',
+    },
+    
+    // Recent Activity
+    activityList: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    },
+    
+    activityItem: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '12px',
+      padding: '12px',
+      borderRadius: '8px',
+      background: '#F9FAFB',
+    },
+    
+    activityIcon: {
+      width: '32px',
+      height: '32px',
+      borderRadius: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    
+    activityIconSuccess: {
+      background: '#D1FAE5',
+      color: '#10B981',
+    },
+    
+    activityIconInfo: {
+      background: '#DBEAFE',
+      color: '#3B82F6',
+    },
+    
+    activityContent: {
+      p: {
+        fontSize: '14px',
+        color: '#1F2937',
+        marginBottom: '4px',
+      },
+    },
+    
+    activityTime: {
+      fontSize: '12px',
+      color: '#6B7280',
+    },
+    
+    // Form
+    formGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gap: '20px',
+    },
+    
+    formGroup: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    },
+    
+    formLabel: {
+      fontSize: '14px',
+      fontWeight: 500,
+      color: '#1F2937',
+    },
+    
+    formInput: {
+      padding: '12px',
+      border: '1px solid #E5E7EB',
+      borderRadius: '8px',
+      fontSize: '14px',
+      transition: 'border-color 0.2s',
+    },
+    
+    formTextarea: {
+      padding: '12px',
+      border: '1px solid #E5E7EB',
+      borderRadius: '8px',
+      fontSize: '14px',
+      transition: 'border-color 0.2s',
+      fontFamily: 'inherit',
+    },
+    
+    formFullWidth: {
+      gridColumn: '1 / -1',
+    },
+    
+    verifiedBadge: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      background: '#D1FAE5',
+      color: '#10B981',
+      padding: '4px 8px',
+      borderRadius: '12px',
+      fontSize: '12px',
+      marginTop: '4px',
+    },
+    
+    charCount: {
+      textAlign: 'right',
+      fontSize: '12px',
+      color: '#6B7280',
+      marginTop: '4px',
+    },
+    
+    // Security Cards
+    securityCards: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    },
+    
+    securityCard: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+      padding: '20px',
+      background: '#F9FAFB',
+      borderRadius: '8px',
+    },
+    
+    securityIcon: {
+      width: '48px',
+      height: '48px',
+      borderRadius: '12px',
+      background: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#3B82F6',
+    },
+    
+    securityContent: {
+      flex: 1,
+      h3: {
+        fontSize: '16px',
+        fontWeight: 600,
+        marginBottom: '4px',
+      },
+      p: {
+        fontSize: '14px',
+        color: '#6B7280',
+      },
+    },
+    
+    securityAction: {
+      background: '#3B82F6',
+      color: 'white',
+      border: 'none',
+      padding: '8px 16px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      cursor: 'pointer',
+      transition: 'background 0.2s',
+    },
+    
+    // Settings
+    settingsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gap: '24px',
+    },
+    
+    settingsCard: {
+      background: '#F9FAFB',
+      padding: '20px',
+      borderRadius: '8px',
+    },
+    
+    settingsCardH3: {
+      fontSize: '16px',
+      fontWeight: 600,
+      marginBottom: '16px',
+      color: '#1F2937',
+    },
+    
+    settingsOption: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '12px 0',
+      borderBottom: '1px solid #E5E7EB',
+    },
+    
+    // Switch
+    switch: {
+      position: 'relative',
+      display: 'inline-block',
+      width: '44px',
+      height: '24px',
+    },
+    
+    switchInput: {
+      opacity: 0,
+      width: 0,
+      height: 0,
+    },
+    
+    slider: {
+      position: 'absolute',
+      cursor: 'pointer',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: '#E5E7EB',
+      transition: '.4s',
+      borderRadius: '24px',
+    },
+    
+    sliderBefore: {
+      position: 'absolute',
+      content: '""',
+      height: '16px',
+      width: '16px',
+      left: '4px',
+      bottom: '4px',
+      backgroundColor: 'white',
+      transition: '.4s',
+      borderRadius: '50%',
+    },
+    
+    // Password Form
+    passwordForm: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+    },
+    
+    passwordInput: {
+      padding: '12px',
+      border: '1px solid #E5E7EB',
+      borderRadius: '8px',
+      fontSize: '14px',
+    },
+    
+    passwordBtn: {
+      background: '#3B82F6',
+      color: 'white',
+      border: 'none',
+      padding: '12px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      cursor: 'pointer',
+      transition: 'background 0.2s',
+    },
+    
+    // Buttons
+    editBtn: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '8px 16px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: 500,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#3B82F6',
+      color: 'white',
+      transition: 'all 0.2s',
+    },
+    
+    cancelBtn: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '8px 16px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: 500,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#E5E7EB',
+      color: '#1F2937',
+      transition: 'all 0.2s',
+    },
+    
+    saveBtn: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '8px 16px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: 500,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#10B981',
+      color: 'white',
+      marginLeft: '8px',
+      transition: 'all 0.2s',
+    },
+    
+    sectionHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '24px',
+    },
+    
+    editActions: {
+      display: 'flex',
+      gap: '8px',
+    },
+    
+    // Loading Screen
+    loadingScreen: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      background: 'white',
+    },
+    
+    spinner: {
+      width: '40px',
+      height: '40px',
+      border: '3px solid #E5E7EB',
+      borderTopColor: '#3B82F6',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      marginBottom: '16px',
+    },
+    
+    // Courses
+    coursesGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gap: '16px',
+    },
+    
+    courseCard: {
+      background: '#F9FAFB',
+      borderRadius: '8px',
+      padding: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+    },
+    
+    courseIcon: {
+      width: '48px',
+      height: '48px',
+      borderRadius: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    
+    courseContent: {
+      flex: 1,
+      h3: {
+        fontSize: '16px',
+        fontWeight: 600,
+        marginBottom: '4px',
+      },
+      p: {
+        fontSize: '14px',
+        color: '#6B7280',
+        marginBottom: '8px',
+      },
+    },
+    
+    courseProgress: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    
+    // Emergency Section
+    emergencySection: {
+      marginTop: '32px',
+      padding: '20px',
+      background: '#FEF3C7',
+      borderRadius: '8px',
+      border: '1px solid #F59E0B',
+      textAlign: 'center',
+    },
+    
+    // Debug
+    debugCard: {
+      background: '#FEF2F2',
+      border: '1px solid #EF4444',
+    },
+    
+    debugActions: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    },
+    
+    debugBtn: {
+      background: '#E5E7EB',
+      color: '#1F2937',
+      border: 'none',
+      padding: '8px 12px',
+      borderRadius: '6px',
+      fontSize: '13px',
+      cursor: 'pointer',
+    },
+    
+    // Utility
+    hidden: {
+      display: 'none',
+    },
+  };
+
   // Destructurer avec des valeurs par défaut
   const { 
     user, 
@@ -592,23 +1332,128 @@ const ProfilePageV2 = () => {
   // ✅ RENDU CHARGEMENT
   if (isLoading && !userData.id && !userData._id) {
     return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
+      <div style={styles.loadingScreen}>
+        <div style={styles.spinner}></div>
         <p>Chargement de votre profil...</p>
         <small>Veuillez patienter</small>
       </div>
     );
   }
 
+  // Fonction pour fusionner les styles
+  const mergeStyles = (baseStyle, additionalStyle) => ({
+    ...baseStyle,
+    ...additionalStyle,
+  });
+
+  // Styles conditionnels
+  const getNavBtnStyle = (tabName) => 
+    mergeStyles(
+      styles.navBtn, 
+      activeTab === tabName ? styles.navBtnActive : {}
+    );
+
+  const getNotificationStyle = (type) => {
+    const base = styles.notification;
+    switch(type) {
+      case 'success': return mergeStyles(base, styles.notificationSuccess);
+      case 'error': return mergeStyles(base, styles.notificationError);
+      case 'warning': return mergeStyles(base, styles.notificationWarning);
+      case 'info': return mergeStyles(base, styles.notificationInfo);
+      default: return base;
+    }
+  };
+
   return (
-    <div className="profile-v2">
+    <div style={styles.profileV2}>
+      {/* Styles CSS globaux */}
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+          }
+          
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: #3B82F6 !important;
+          }
+          
+          input:read-only, textarea:read-only {
+            background: #F9FAFB !important;
+            cursor: not-allowed;
+          }
+          
+          input.editable, textarea.editable {
+            background: white !important;
+          }
+          
+          .slider:before {
+            content: "" !important;
+          }
+          
+          input:checked + .slider {
+            background-color: #3B82F6 !important;
+          }
+          
+          input:checked + .slider:before {
+            transform: translateX(20px) !important;
+          }
+          
+          @media (max-width: 768px) {
+            .profile-container-v2 {
+              grid-template-columns: 1fr !important;
+              padding: 16px !important;
+            }
+            
+            .stats-grid {
+              grid-template-columns: 1fr !important;
+            }
+            
+            .settings-grid {
+              grid-template-columns: 1fr !important;
+            }
+            
+            .form-grid {
+              grid-template-columns: 1fr !important;
+            }
+            
+            .courses-grid {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}
+      </style>
+
       {/* Notifications */}
-      <div className="notifications-container">
+      <div style={styles.notificationsContainer}>
         {notifications.map(notification => (
-          <div key={notification.id} className={`notification ${notification.type}`}>
+          <div key={notification.id} style={getNotificationStyle(notification.type)}>
             <span>{notification.message}</span>
             <button 
-              className="notification-close"
+              style={styles.notificationClose}
               onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
             >
               ×
@@ -618,20 +1463,20 @@ const ProfilePageV2 = () => {
       </div>
 
       {/* Header */}
-      <header className="profile-header-v2">
-        <div className="header-container">
-          <button className="back-btn" onClick={() => navigate(-1)}>
+      <header style={styles.profileHeaderV2}>
+        <div style={styles.headerContainer}>
+          <button style={styles.backBtn} onClick={() => navigate(-1)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M19 12H5M12 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Retour
           </button>
           
-          <h1 className="page-title">Mon Profil</h1>
+          <h1 style={styles.pageTitle}>Mon Profil</h1>
           
-          <div className="header-actions">
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button 
-              className="icon-btn" 
+              style={styles.iconBtn}
               onClick={() => setActiveTab('settings')}
               title="Paramètres"
             >
@@ -644,7 +1489,7 @@ const ProfilePageV2 = () => {
             {/* Bouton de débogage - visible en développement seulement */}
             {process.env.NODE_ENV === 'development' && (
               <button 
-                className="icon-btn debug-btn"
+                style={styles.iconBtn}
                 onClick={resetSession}
                 title="Réinitialiser la session (debug)"
               >
@@ -660,33 +1505,39 @@ const ProfilePageV2 = () => {
       </header>
 
       {/* Main Content */}
-      <div className="profile-container-v2">
+      <div style={styles.profileContainerV2}>
         {/* Sidebar */}
-        <aside className="profile-sidebar-v2">
-          <div className="profile-card">
+        <aside style={styles.profileSidebarV2}>
+          <div style={styles.profileCard}>
             {/* Avatar */}
-            <div className="avatar-section">
+            <div style={styles.avatarSection}>
               <div 
-                className="avatar-wrapper"
+                style={styles.avatarWrapper}
                 onClick={() => fileInputRef.current?.click()}
                 title="Cliquer pour changer l'avatar"
+                onMouseEnter={(e) => {
+                  e.currentTarget.querySelector('.avatar-overlay').style.opacity = '1';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.querySelector('.avatar-overlay').style.opacity = '0';
+                }}
               >
                 {userData.avatar ? (
                   <img 
                     src={userData.avatar} 
                     alt="Avatar" 
-                    className="avatar-image"
+                    style={styles.avatarImage}
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.parentElement.querySelector('.avatar-placeholder').style.display = 'flex';
                     }}
                   />
                 ) : (
-                  <div className="avatar-placeholder">
+                  <div style={styles.avatarPlaceholder}>
                     {getInitials()}
                   </div>
                 )}
-                <div className="avatar-overlay">
+                <div className="avatar-overlay" style={styles.avatarOverlay}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white">
                     <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" strokeWidth="2"/>
                     <circle cx="12" cy="13" r="4" strokeWidth="2"/>
@@ -699,16 +1550,16 @@ const ProfilePageV2 = () => {
                 ref={fileInputRef}
                 onChange={handleAvatarChange}
                 accept="image/*"
-                className="hidden"
+                style={styles.hidden}
               />
               
-              <h2 className="user-name">
+              <h2 style={styles.userName}>
                 {userData.firstName || userData.prenom || 'Utilisateur'} {userData.lastName || userData.nom || ''}
               </h2>
-              <p className="user-role">{getRoleLabel()}</p>
+              <p style={styles.userRole}>{getRoleLabel()}</p>
               
-              <div className="user-meta">
-                <span className="meta-item">
+              <div style={styles.userMeta}>
+                <span style={styles.metaItem}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"/>
                     <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"/>
@@ -721,9 +1572,9 @@ const ProfilePageV2 = () => {
             </div>
 
             {/* Navigation */}
-            <nav className="sidebar-nav">
+            <nav style={styles.sidebarNav}>
               <button 
-                className={`nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                style={getNavBtnStyle('overview')}
                 onClick={() => setActiveTab('overview')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -734,7 +1585,7 @@ const ProfilePageV2 = () => {
               </button>
               
               <button 
-                className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                style={getNavBtnStyle('profile')}
                 onClick={() => setActiveTab('profile')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -745,7 +1596,7 @@ const ProfilePageV2 = () => {
               </button>
               
               <button 
-                className={`nav-btn ${activeTab === 'security' ? 'active' : ''}`}
+                style={getNavBtnStyle('security')}
                 onClick={() => setActiveTab('security')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -755,7 +1606,7 @@ const ProfilePageV2 = () => {
               </button>
               
               <button 
-                className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}
+                style={getNavBtnStyle('courses')}
                 onClick={() => setActiveTab('courses')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -766,7 +1617,7 @@ const ProfilePageV2 = () => {
               </button>
               
               <button 
-                className={`nav-btn ${activeTab === 'settings' ? 'active' : ''}`}
+                style={getNavBtnStyle('settings')}
                 onClick={() => setActiveTab('settings')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -776,7 +1627,7 @@ const ProfilePageV2 = () => {
                 Paramètres
               </button>
               
-              <button className="nav-btn logout" onClick={handleLogout}>
+              <button style={{ ...styles.navBtn, ...styles.navBtnLogout }} onClick={handleLogout}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" strokeWidth="2"/>
                   <polyline points="16 17 21 12 16 7" strokeWidth="2"/>
@@ -789,54 +1640,54 @@ const ProfilePageV2 = () => {
         </aside>
 
         {/* Main Content Area */}
-        <main className="profile-content-v2">
+        <main style={styles.profileContentV2}>
           {/* Vue d'ensemble */}
           {activeTab === 'overview' && (
-            <div className="content-section">
-              <h2 className="section-title">Vue d'ensemble</h2>
+            <div style={styles.contentSection}>
+              <h2 style={styles.sectionTitle}>Vue d'ensemble</h2>
               
               {/* Stats Cards */}
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-icon" style={{ background: '#3B82F620', color: '#3B82F6' }}>
+              <div style={styles.statsGrid}>
+                <div style={styles.statCard}>
+                  <div style={{ ...styles.statIcon, background: '#3B82F620', color: '#3B82F6' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" strokeWidth="2"/>
                       <polyline points="22 4 12 14.01 9 11.01" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="stat-content">
+                  <div style={styles.statContent}>
                     <h3>{stats.completedCourses}</h3>
                     <p>Formations terminées</p>
                   </div>
                 </div>
                 
-                <div className="stat-card">
-                  <div className="stat-icon" style={{ background: '#10B98120', color: '#10B981' }}>
+                <div style={styles.statCard}>
+                  <div style={{ ...styles.statIcon, background: '#10B98120', color: '#10B981' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="stat-content">
+                  <div style={styles.statContent}>
                     <h3>{stats.inProgressCourses}</h3>
                     <p>En cours</p>
                   </div>
                 </div>
                 
-                <div className="stat-card">
-                  <div className="stat-icon" style={{ background: '#F59E0B20', color: '#F59E0B' }}>
+                <div style={styles.statCard}>
+                  <div style={{ ...styles.statIcon, background: '#F59E0B20', color: '#F59E0B' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <circle cx="12" cy="12" r="10" strokeWidth="2"/>
                       <polyline points="12 6 12 12 16 14" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="stat-content">
+                  <div style={styles.statContent}>
                     <h3>{stats.totalHours}h</h3>
                     <p>Heures de formation</p>
                   </div>
                 </div>
                 
-                <div className="stat-card">
-                  <div className="stat-icon" style={{ background: '#8B5CF620', color: '#8B5CF6' }}>
+                <div style={styles.statCard}>
+                  <div style={{ ...styles.statIcon, background: '#8B5CF620', color: '#8B5CF6' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M12 20v-6M6 20v-2M18 20v-4" strokeWidth="2"/>
                       <path d="M3 6l2-3h14l2 3" strokeWidth="2"/>
@@ -845,7 +1696,7 @@ const ProfilePageV2 = () => {
                       <path d="M8 12h8" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="stat-content">
+                  <div style={styles.statContent}>
                     <h3>{stats.avgScore}%</h3>
                     <p>Moyenne générale</p>
                   </div>
@@ -853,15 +1704,14 @@ const ProfilePageV2 = () => {
               </div>
 
               {/* Progression */}
-              <div className="progress-section">
-                <h3 className="progress-title">Progression globale</h3>
-                <div className="progress-bar">
+              <div style={styles.progressSection}>
+                <h3 style={styles.progressTitle}>Progression globale</h3>
+                <div style={styles.progressBar}>
                   <div 
-                    className="progress-fill" 
-                    style={{ width: `${stats.avgScore}%` }}
+                    style={{ ...styles.progressFill, width: `${stats.avgScore}%` }}
                   ></div>
                 </div>
-                <div className="progress-labels">
+                <div style={styles.progressLabels}>
                   <span>0%</span>
                   <span>{stats.avgScore}%</span>
                   <span>100%</span>
@@ -869,54 +1719,63 @@ const ProfilePageV2 = () => {
               </div>
 
               {/* Activité récente */}
-              <div className="recent-activity">
-                <h3 className="activity-title">Activité récente</h3>
-                <div className="activity-list">
-                  <div className="activity-item">
-                    <div className="activity-icon success">
+              <div style={{ marginTop: '32px' }}>
+                <h3 style={styles.progressTitle}>Activité récente</h3>
+                <div style={styles.activityList}>
+                  <div style={styles.activityItem}>
+                    <div style={{ ...styles.activityIcon, ...styles.activityIconSuccess }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M22 11.08V12a10 10 0 11-5.93-9.14" strokeWidth="2"/>
                         <polyline points="22 4 12 14.01 9 11.01" strokeWidth="2"/>
                       </svg>
                     </div>
-                    <div className="activity-content">
+                    <div style={styles.activityContent}>
                       <p>Formation React avancé terminée</p>
-                      <span className="activity-time">Il y a 2 jours</span>
+                      <span style={styles.activityTime}>Il y a 2 jours</span>
                     </div>
                   </div>
                   
-                  <div className="activity-item">
-                    <div className="activity-icon info">
+                  <div style={styles.activityItem}>
+                    <div style={{ ...styles.activityIcon, ...styles.activityIconInfo }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeWidth="2"/>
                       </svg>
                     </div>
-                    <div className="activity-content">
+                    <div style={styles.activityContent}>
                       <p>Nouvelle formation démarrée</p>
-                      <span className="activity-time">Il y a 5 jours</span>
+                      <span style={styles.activityTime}>Il y a 5 jours</span>
                     </div>
                   </div>
                   
-                  <div className="activity-item">
-                    <div className="activity-icon info">
+                  <div style={styles.activityItem}>
+                    <div style={{ ...styles.activityIcon, ...styles.activityIconInfo }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M12 8v4M12 16h.01" strokeWidth="2" strokeLinecap="round"/>
                         <circle cx="12" cy="12" r="10" strokeWidth="2"/>
                       </svg>
                     </div>
-                    <div className="activity-content">
+                    <div style={styles.activityContent}>
                       <p>Quiz passé avec succès</p>
-                      <span className="activity-time">Il y a 1 semaine</span>
+                      <span style={styles.activityTime}>Il y a 1 semaine</span>
                     </div>
                   </div>
                 </div>
               </div>
               
               {/* Section de réparation */}
-              <div className="emergency-section">
-                <h4>Problèmes de session ?</h4>
+              <div style={styles.emergencySection}>
+                <h4 style={{ marginBottom: '12px', color: '#92400E' }}>Problèmes de session ?</h4>
                 <button 
-                  className="btn-secondary"
+                  style={{
+                    background: '#F59E0B',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
                   onClick={async () => {
                     const cleaned = cleanLargeCookies();
                     addNotification(`${cleaned} éléments nettoyés`, 'info');
@@ -931,11 +1790,11 @@ const ProfilePageV2 = () => {
 
           {/* Informations personnelles */}
           {activeTab === 'profile' && (
-            <div className="content-section">
-              <div className="section-header">
-                <h2 className="section-title">Informations personnelles</h2>
+            <div style={styles.contentSection}>
+              <div style={styles.sectionHeader}>
+                <h2 style={styles.sectionTitle}>Informations personnelles</h2>
                 {!isEditing ? (
-                  <button className="edit-btn" onClick={() => setIsEditing(true)}>
+                  <button style={styles.editBtn} onClick={() => setIsEditing(true)}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeWidth="2"/>
                       <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeWidth="2"/>
@@ -943,20 +1802,20 @@ const ProfilePageV2 = () => {
                     Modifier
                   </button>
                 ) : (
-                  <div className="edit-actions">
-                    <button className="cancel-btn" onClick={() => setIsEditing(false)}>
+                  <div style={styles.editActions}>
+                    <button style={styles.cancelBtn} onClick={() => setIsEditing(false)}>
                       Annuler
                     </button>
-                    <button className="save-btn" onClick={updateProfile} disabled={isLoading}>
+                    <button style={styles.saveBtn} onClick={updateProfile} disabled={isLoading}>
                       {isLoading ? 'Enregistrement...' : 'Enregistrer'}
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Prénom</label>
+              <div style={styles.formGrid}>
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Prénom</label>
                   <input
                     type="text"
                     value={editForm.firstName}
@@ -965,11 +1824,12 @@ const ProfilePageV2 = () => {
                     className={isEditing ? 'editable' : ''}
                     disabled={isLoading}
                     placeholder="Votre prénom"
+                    style={styles.formInput}
                   />
                 </div>
                 
-                <div className="form-group">
-                  <label>Nom</label>
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Nom</label>
                   <input
                     type="text"
                     value={editForm.lastName}
@@ -978,19 +1838,21 @@ const ProfilePageV2 = () => {
                     className={isEditing ? 'editable' : ''}
                     disabled={isLoading}
                     placeholder="Votre nom"
+                    style={styles.formInput}
                   />
                 </div>
                 
-                <div className="form-group">
-                  <label>Email</label>
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Email</label>
                   <input
                     type="email"
                     value={editForm.email}
                     readOnly
                     disabled
                     placeholder="Votre email"
+                    style={styles.formInput}
                   />
-                  <span className="verified-badge">
+                  <span style={styles.verifiedBadge}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M20 6L9 17l-5-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -998,8 +1860,8 @@ const ProfilePageV2 = () => {
                   </span>
                 </div>
                 
-                <div className="form-group">
-                  <label>Téléphone</label>
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Téléphone</label>
                   <input
                     type="tel"
                     value={editForm.phone || ''}
@@ -1008,11 +1870,12 @@ const ProfilePageV2 = () => {
                     className={isEditing ? 'editable' : ''}
                     disabled={isLoading}
                     placeholder="Votre numéro de téléphone"
+                    style={styles.formInput}
                   />
                 </div>
                 
-                <div className="form-group full-width">
-                  <label>Bio</label>
+                <div style={{ ...styles.formGroup, ...styles.formFullWidth }}>
+                  <label style={styles.formLabel}>Bio</label>
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
@@ -1022,8 +1885,9 @@ const ProfilePageV2 = () => {
                     placeholder="Décrivez-vous en quelques mots..."
                     disabled={isLoading}
                     maxLength="500"
+                    style={styles.formTextarea}
                   />
-                  <div className="char-count">
+                  <div style={styles.charCount}>
                     {editForm.bio.length}/500 caractères
                   </div>
                 </div>
@@ -1033,56 +1897,56 @@ const ProfilePageV2 = () => {
 
           {/* Sécurité */}
           {activeTab === 'security' && (
-            <div className="content-section">
-              <h2 className="section-title">Sécurité du compte</h2>
+            <div style={styles.contentSection}>
+              <h2 style={styles.sectionTitle}>Sécurité du compte</h2>
               
-              <div className="security-cards">
-                <div className="security-card">
-                  <div className="security-icon">
+              <div style={styles.securityCards}>
+                <div style={styles.securityCard}>
+                  <div style={styles.securityIcon}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="security-content">
+                  <div style={styles.securityContent}>
                     <h3>Mot de passe</h3>
                     <p>Dernière modification il y a 30 jours</p>
                   </div>
                   <button 
-                    className="security-action"
+                    style={styles.securityAction}
                     onClick={() => setActiveTab('settings')}
                   >
                     Modifier
                   </button>
                 </div>
                 
-                <div className="security-card">
-                  <div className="security-icon">
+                <div style={styles.securityCard}>
+                  <div style={styles.securityIcon}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeWidth="2"/>
                       <path d="M12 8v4l2 2" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="security-content">
+                  <div style={styles.securityContent}>
                     <h3>Authentification à deux facteurs</h3>
                     <p>Non activée</p>
                   </div>
-                  <button className="security-action">
+                  <button style={styles.securityAction}>
                     Activer
                   </button>
                 </div>
                 
-                <div className="security-card">
-                  <div className="security-icon">
+                <div style={styles.securityCard}>
+                  <div style={styles.securityIcon}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" strokeWidth="2"/>
                       <path d="M13.73 21a2 2 0 01-3.46 0" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div className="security-content">
+                  <div style={styles.securityContent}>
                     <h3>Sessions actives</h3>
                     <p>1 appareil connecté</p>
                   </div>
-                  <button className="security-action">
+                  <button style={styles.securityAction}>
                     Gérer
                   </button>
                 </div>
@@ -1092,64 +1956,62 @@ const ProfilePageV2 = () => {
 
           {/* Formations */}
           {activeTab === 'courses' && (
-            <div className="content-section">
-              <h2 className="section-title">Mes Formations</h2>
-              <div className="courses-section">
-                <div className="courses-grid">
-                  <div className="course-card">
-                    <div className="course-icon" style={{ background: '#3B82F620', color: '#3B82F6' }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" strokeWidth="2"/>
-                        <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                    <div className="course-content">
-                      <h3>React Avancé</h3>
-                      <p>Terminé • 12 heures</p>
-                      <div className="course-progress">
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{ width: '100%' }}></div>
-                        </div>
-                        <span>100%</span>
+            <div style={styles.contentSection}>
+              <h2 style={styles.sectionTitle}>Mes Formations</h2>
+              <div style={styles.coursesGrid}>
+                <div style={styles.courseCard}>
+                  <div style={{ ...styles.courseIcon, background: '#3B82F620', color: '#3B82F6' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" strokeWidth="2"/>
+                      <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div style={styles.courseContent}>
+                    <h3>React Avancé</h3>
+                    <p>Terminé • 12 heures</p>
+                    <div style={styles.courseProgress}>
+                      <div style={styles.progressBar}>
+                        <div style={{ ...styles.progressFill, width: '100%' }}></div>
                       </div>
+                      <span>100%</span>
                     </div>
                   </div>
-                  
-                  <div className="course-card">
-                    <div className="course-icon" style={{ background: '#10B98120', color: '#10B981' }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" strokeWidth="2"/>
-                        <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                    <div className="course-content">
-                      <h3>Node.js Backend</h3>
-                      <p>En cours • 8/15 heures</p>
-                      <div className="course-progress">
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{ width: '65%' }}></div>
-                        </div>
-                        <span>65%</span>
+                </div>
+                
+                <div style={styles.courseCard}>
+                  <div style={{ ...styles.courseIcon, background: '#10B98120', color: '#10B981' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" strokeWidth="2"/>
+                      <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div style={styles.courseContent}>
+                    <h3>Node.js Backend</h3>
+                    <p>En cours • 8/15 heures</p>
+                    <div style={styles.courseProgress}>
+                      <div style={styles.progressBar}>
+                        <div style={{ ...styles.progressFill, width: '65%' }}></div>
                       </div>
+                      <span>65%</span>
                     </div>
                   </div>
-                  
-                  <div className="course-card">
-                    <div className="course-icon" style={{ background: '#8B5CF620', color: '#8B5CF6' }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" strokeWidth="2"/>
-                        <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                    <div className="course-content">
-                      <h3>UI/UX Design</h3>
-                      <p>À commencer • 10 heures</p>
-                      <div className="course-progress">
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{ width: '0%' }}></div>
-                        </div>
-                        <span>0%</span>
+                </div>
+                
+                <div style={styles.courseCard}>
+                  <div style={{ ...styles.courseIcon, background: '#8B5CF620', color: '#8B5CF6' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" strokeWidth="2"/>
+                      <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div style={styles.courseContent}>
+                    <h3>UI/UX Design</h3>
+                    <p>À commencer • 10 heures</p>
+                    <div style={styles.courseProgress}>
+                      <div style={styles.progressBar}>
+                        <div style={{ ...styles.progressFill, width: '0%' }}></div>
                       </div>
+                      <span>0%</span>
                     </div>
                   </div>
                 </div>
@@ -1159,68 +2021,68 @@ const ProfilePageV2 = () => {
 
           {/* Paramètres */}
           {activeTab === 'settings' && (
-            <div className="content-section">
-              <h2 className="section-title">Paramètres</h2>
+            <div style={styles.contentSection}>
+              <h2 style={styles.sectionTitle}>Paramètres</h2>
               
-              <div className="settings-grid">
-                <div className="settings-card">
-                  <h3>Notifications</h3>
-                  <div className="settings-option">
+              <div style={styles.settingsGrid}>
+                <div style={styles.settingsCard}>
+                  <h3 style={styles.settingsCardH3}>Notifications</h3>
+                  <div style={styles.settingsOption}>
                     <span>Notifications par email</span>
-                    <label className="switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="slider"></span>
+                    <label style={styles.switch}>
+                      <input type="checkbox" defaultChecked style={styles.switchInput} />
+                      <span className="slider" style={styles.slider}></span>
                     </label>
                   </div>
-                  <div className="settings-option">
+                  <div style={styles.settingsOption}>
                     <span>Notifications push</span>
-                    <label className="switch">
-                      <input type="checkbox" />
-                      <span className="slider"></span>
+                    <label style={styles.switch}>
+                      <input type="checkbox" style={styles.switchInput} />
+                      <span className="slider" style={styles.slider}></span>
                     </label>
                   </div>
-                  <div className="settings-option">
+                  <div style={styles.settingsOption}>
                     <span>Notifications de cours</span>
-                    <label className="switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="slider"></span>
+                    <label style={styles.switch}>
+                      <input type="checkbox" defaultChecked style={styles.switchInput} />
+                      <span className="slider" style={styles.slider}></span>
                     </label>
                   </div>
                 </div>
                 
-                <div className="settings-card">
-                  <h3>Confidentialité</h3>
-                  <div className="settings-option">
+                <div style={styles.settingsCard}>
+                  <h3 style={styles.settingsCardH3}>Confidentialité</h3>
+                  <div style={styles.settingsOption}>
                     <span>Profil public</span>
-                    <label className="switch">
-                      <input type="checkbox" />
-                      <span className="slider"></span>
+                    <label style={styles.switch}>
+                      <input type="checkbox" style={styles.switchInput} />
+                      <span className="slider" style={styles.slider}></span>
                     </label>
                   </div>
-                  <div className="settings-option">
+                  <div style={styles.settingsOption}>
                     <span>Afficher l'email</span>
-                    <label className="switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="slider"></span>
+                    <label style={styles.switch}>
+                      <input type="checkbox" defaultChecked style={styles.switchInput} />
+                      <span className="slider" style={styles.slider}></span>
                     </label>
                   </div>
-                  <div className="settings-option">
+                  <div style={styles.settingsOption}>
                     <span>Afficher l'activité</span>
-                    <label className="switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="slider"></span>
+                    <label style={styles.switch}>
+                      <input type="checkbox" defaultChecked style={styles.switchInput} />
+                      <span className="slider" style={styles.slider}></span>
                     </label>
                   </div>
                 </div>
                 
-                <div className="settings-card">
-                  <h3>Changer le mot de passe</h3>
-                  <form className="password-form" onSubmit={handlePasswordSubmit}>
+                <div style={styles.settingsCard}>
+                  <h3 style={styles.settingsCardH3}>Changer le mot de passe</h3>
+                  <form style={styles.passwordForm} onSubmit={handlePasswordSubmit}>
                     <input
                       type="password"
                       name="currentPassword"
                       placeholder="Mot de passe actuel"
-                      className="password-input"
+                      style={styles.passwordInput}
                       required
                       disabled={isLoading}
                     />
@@ -1228,7 +2090,7 @@ const ProfilePageV2 = () => {
                       type="password"
                       name="newPassword"
                       placeholder="Nouveau mot de passe"
-                      className="password-input"
+                      style={styles.passwordInput}
                       required
                       minLength="6"
                       disabled={isLoading}
@@ -1237,11 +2099,11 @@ const ProfilePageV2 = () => {
                       type="password"
                       name="confirmPassword"
                       placeholder="Confirmer le mot de passe"
-                      className="password-input"
+                      style={styles.passwordInput}
                       required
                       disabled={isLoading}
                     />
-                    <button type="submit" className="password-btn" disabled={isLoading}>
+                    <button type="submit" style={styles.passwordBtn} disabled={isLoading}>
                       {isLoading ? 'Changement en cours...' : 'Mettre à jour le mot de passe'}
                     </button>
                   </form>
@@ -1249,11 +2111,11 @@ const ProfilePageV2 = () => {
                 
                 {/* Section de débogage */}
                 {process.env.NODE_ENV === 'development' && (
-                  <div className="settings-card debug-card">
-                    <h3>Débogage</h3>
-                    <div className="debug-actions">
+                  <div style={{ ...styles.settingsCard, ...styles.debugCard }}>
+                    <h3 style={styles.settingsCardH3}>Débogage</h3>
+                    <div style={styles.debugActions}>
                       <button 
-                        className="debug-btn" 
+                        style={styles.debugBtn}
                         onClick={() => {
                           console.log('État actuel:', {
                             userData,
@@ -1270,7 +2132,7 @@ const ProfilePageV2 = () => {
                         Afficher les données
                       </button>
                       <button 
-                        className="debug-btn"
+                        style={styles.debugBtn}
                         onClick={() => {
                           const cleaned = cleanLargeCookies();
                           addNotification(`${cleaned} éléments nettoyés`, 'success');
@@ -1279,7 +2141,7 @@ const ProfilePageV2 = () => {
                         Nettoyer les cookies
                       </button>
                       <button 
-                        className="debug-btn warning"
+                        style={{ ...styles.debugBtn, background: '#FEE2E2', color: '#DC2626' }}
                         onClick={resetSession}
                       >
                         Réinitialiser la session
@@ -1287,7 +2149,7 @@ const ProfilePageV2 = () => {
                       
                       {/* Test de connexion minimaliste */}
                       <button 
-                        className="debug-btn"
+                        style={styles.debugBtn}
                         onClick={async () => {
                           const response = await fetch('/api/auth/profile', {
                             method: 'GET',

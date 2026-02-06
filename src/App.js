@@ -5,7 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import PrivateRoute from "./components/Auth/PrivateRoute";
 import Login from "./components/Auth/login";
 import Register from "./components/Auth/register";
-
+import ResetPassword from "./components/Auth/ResetPassword";
 // Pages pour chaque rôle
 // Formateur
 import FormateurAccueil from "./components/pages/Formateur/Accueil";
@@ -22,6 +22,8 @@ import AdminDashboard from "./components/pages/Admin/Dashboard";
 import AdminDashboardListFormateur from "./components/pages/Admin/DashboardListFormateur";
 import AjoutProfilStagiaire from "./components/pages/Admin/ajoutProfilStagiaire";
 import AjoutProfilFormateur from "./components/pages/Admin/ajoutProfilFormateur";
+import ModifProfilFormateur from "./components/pages/Admin/ModifProfilFormateur";
+import ModifProfilStagiaire from "./components/pages/Admin/ModifProfilStagiaire";
 
 // Profil
 import Profile from "./components/profil/profil";
@@ -34,6 +36,7 @@ function App() {
           {/* Routes publiques */}
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Routes pour Formateur */}
           <Route element={<PrivateRoute allowedRoles={['formateur']} />}>
@@ -55,6 +58,8 @@ function App() {
             <Route path="/admin/dashboardListFormateur" element={<AdminDashboardListFormateur />} />
             <Route path="/stagiaire/ajouter" element={<AjoutProfilStagiaire />} />
             <Route path="/formateur/ajouter" element={<AjoutProfilFormateur />} />
+            <Route path="/stagiaire/modifier/:id" element={<ModifProfilFormateur />} />
+           <Route path="/formateur/modifier/:id" element={<ModifProfilFormateur />} />
           </Route>
 
           {/* Route profil - accessible à tous les rôles connectés */}

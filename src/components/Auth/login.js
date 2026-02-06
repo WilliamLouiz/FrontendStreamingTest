@@ -1,7 +1,252 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import logo from "../../assets/images/logo.png";
+
+// Composant Modal séparé pour éviter les re-renders inutiles
+const ModalContent = ({ modal, closeModal, forgotEmail, setForgotEmail, handleForgotPassword, handleContactAdmin, styles }) => {
+  const forgotEmailInputRef = useRef(null);
+
+  // Focus sur le champ email quand le modal s'ouvre
+  useEffect(() => {
+    if (modal.isOpen && modal.type === 'forgot' && forgotEmailInputRef.current) {
+      forgotEmailInputRef.current.focus();
+    }
+  }, [modal.isOpen, modal.type]);
+
+  const getModalStyle = () => {
+    switch (modal.type) {
+      case 'success':
+        return { ...styles.modal, ...styles.modalSuccess };
+      case 'error':
+        return { ...styles.modal, ...styles.modalError };
+      case 'info':
+      case 'forgot':
+        return { ...styles.modal, ...styles.modalInfo };
+      default:
+        return styles.modal;
+    }
+  };
+
+  const getModalIconStyle = () => {
+    switch (modal.type) {
+      case 'success':
+        return { ...styles.modalIcon, ...styles.modalIconSuccess };
+      case 'error':
+        return { ...styles.modalIcon, ...styles.modalIconError };
+      case 'info':
+      case 'forgot':
+        return { ...styles.modalIcon, ...styles.modalIconInfo };
+      default:
+        return styles.modalIcon;
+    }
+  };
+
+  const getModalButtonStyle = () => {
+    switch (modal.type) {
+      case 'success':
+        return { ...styles.modalButton, ...styles.modalButtonSuccess };
+      case 'error':
+        return { ...styles.modalButton, ...styles.modalButtonError };
+      case 'info':
+      case 'forgot':
+        return { ...styles.modalButton, ...styles.modalButtonInfo };
+      default:
+        return styles.modalButton;
+    }
+  };
+
+  switch (modal.type) {
+    case 'success':
+      return (
+        <div style={getModalStyle()}>
+          <button 
+            style={styles.modalClose}
+            onClick={closeModal}
+            onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+          >
+            ×
+          </button>
+          <div style={getModalIconStyle()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </div>
+          <h2 style={styles.modalTitle}>{modal.title}</h2>
+          <p style={styles.modalText}>{modal.message}</p>
+          <button 
+            style={getModalButtonStyle()}
+            onClick={closeModal}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.9";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            OK
+          </button>
+        </div>
+      );
+    
+    case 'error':
+      return (
+        <div style={getModalStyle()}>
+          <button 
+            style={styles.modalClose}
+            onClick={closeModal}
+            onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+          >
+            ×
+          </button>
+          <div style={getModalIconStyle()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <h2 style={styles.modalTitle}>{modal.title}</h2>
+          <p style={styles.modalText}>{modal.message}</p>
+          <button 
+            style={getModalButtonStyle()}
+            onClick={closeModal}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.9";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Réessayer
+          </button>
+        </div>
+      );
+    
+    case 'info':
+      return (
+        <div style={getModalStyle()}>
+          <button 
+            style={styles.modalClose}
+            onClick={closeModal}
+            onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+          >
+            ×
+          </button>
+          <div style={getModalIconStyle()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <h2 style={styles.modalTitle}>{modal.title}</h2>
+          <p style={styles.modalText}>{modal.message}</p>
+          
+          {modal.requiresValidation && (
+            <div style={styles.validationActions}>
+              <button 
+                style={getModalButtonStyle()}
+                onClick={handleContactAdmin}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                Contacter l'administrateur
+              </button>
+            </div>
+          )}
+          
+          {!modal.requiresValidation && (
+            <button 
+              style={getModalButtonStyle()}
+              onClick={closeModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              OK
+            </button>
+          )}
+        </div>
+      );
+    
+    case 'forgot':
+      return (
+        <div style={getModalStyle()}>
+          <button 
+            style={styles.modalClose}
+            onClick={closeModal}
+            onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
+          >
+            ×
+          </button>
+          <div style={getModalIconStyle()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <h2 style={styles.modalTitle}>{modal.title}</h2>
+          <p style={styles.modalText}>{modal.message}</p>
+          
+          <form 
+            onSubmit={handleForgotPassword} 
+            style={styles.forgotPasswordForm}
+          >
+            <input
+              ref={forgotEmailInputRef}
+              type="email"
+              style={styles.forgotPasswordInput}
+              placeholder="votreemail@mail.com"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#2563eb";
+                e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.15)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#cbd5e1";
+                e.target.style.boxShadow = "none";
+              }}
+              required
+              autoFocus
+            />
+            <button 
+              type="submit" 
+              style={getModalButtonStyle()}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              Envoyer le lien
+            </button>
+          </form>
+        </div>
+      );
+    
+    default:
+      return null;
+  }
+};
 
 const Login = () => {
   const LOGIN_API_URL = `http://192.168.2.161:5000/api/auth/login`;
@@ -86,11 +331,6 @@ const Login = () => {
       fontSize: "14px",
       transition: "all 0.3s ease",
     },
-    formInputFocus: {
-      outline: "none",
-      background: "#e5e7eb",
-      boxShadow: "0 0 0 3px rgba(46,62,146,0.2)",
-    },
     
     // Checkbox styles
     checkboxRow: {
@@ -114,9 +354,6 @@ const Login = () => {
       fontWeight: "600",
       cursor: "pointer",
       transition: "color 0.2s",
-    },
-    forgotLinkHover: {
-      color: "#1e2a78",
     },
     
     // Signup text
@@ -149,9 +386,6 @@ const Login = () => {
       transition: "all 0.3s ease",
       fontSize: "14px",
       outline: "none",
-    },
-    submitButtonHover: {
-      transform: "scale(1.05)",
     },
     submitButtonDisabled: {
       opacity: "0.7",
@@ -219,9 +453,6 @@ const Login = () => {
       transition: "color 0.2s",
       outline: "none",
     },
-    modalCloseHover: {
-      color: "#000",
-    },
     modalIcon: {
       width: "70px",
       height: "70px",
@@ -276,10 +507,6 @@ const Login = () => {
     modalButtonInfo: {
       background: "#2563eb",
     },
-    modalButtonHover: {
-      opacity: "0.9",
-      transform: "translateY(-1px)",
-    },
     
     // Forgot password form
     forgotPasswordForm: {
@@ -294,10 +521,6 @@ const Login = () => {
       fontSize: "15px",
       outline: "none",
       transition: "border 0.2s, box-shadow 0.2s",
-    },
-    forgotPasswordInputFocus: {
-      borderColor: "#2563eb",
-      boxShadow: "0 0 0 3px rgba(37, 99, 235, 0.15)",
     },
     
     // Validation actions
@@ -504,7 +727,7 @@ const Login = () => {
 
     try {
       // Appel API pour mot de passe oublié
-      const response = await fetch('http://192.168.2.161:5000/api/auth/forgot-password', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://192.168.2.161:5000'}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -539,10 +762,12 @@ const Login = () => {
       title: 'Mot de passe oublié',
       message: 'Entrez votre adresse email pour réinitialiser votre mot de passe.'
     });
+    
+    // Réinitialiser l'email du formulaire "mot de passe oublié"
+    setForgotEmail('');
   };
 
   const handleContactAdmin = () => {
-    // Vous pouvez rediriger vers une page contact ou ouvrir un email client
     window.location.href = 'mailto:njatomiarintsoawilliam@gmail.com?subject=Validation%20de%20compte';
   };
 
@@ -560,239 +785,6 @@ const Login = () => {
       }
     }
   }, []);
-
-  const ModalContent = () => {
-    const getModalStyle = () => {
-      switch (modal.type) {
-        case 'success':
-          return { ...styles.modal, ...styles.modalSuccess };
-        case 'error':
-          return { ...styles.modal, ...styles.modalError };
-        case 'info':
-        case 'forgot':
-          return { ...styles.modal, ...styles.modalInfo };
-        default:
-          return styles.modal;
-      }
-    };
-
-    const getModalIconStyle = () => {
-      switch (modal.type) {
-        case 'success':
-          return { ...styles.modalIcon, ...styles.modalIconSuccess };
-        case 'error':
-          return { ...styles.modalIcon, ...styles.modalIconError };
-        case 'info':
-        case 'forgot':
-          return { ...styles.modalIcon, ...styles.modalIconInfo };
-        default:
-          return styles.modalIcon;
-      }
-    };
-
-    const getModalButtonStyle = () => {
-      switch (modal.type) {
-        case 'success':
-          return { ...styles.modalButton, ...styles.modalButtonSuccess };
-        case 'error':
-          return { ...styles.modalButton, ...styles.modalButtonError };
-        case 'info':
-        case 'forgot':
-          return { ...styles.modalButton, ...styles.modalButtonInfo };
-        default:
-          return styles.modalButton;
-      }
-    };
-
-    switch (modal.type) {
-      case 'success':
-        return (
-          <div style={getModalStyle()}>
-            <button 
-              style={styles.modalClose}
-              onClick={closeModal}
-              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
-              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
-            >
-              ×
-            </button>
-            <div style={getModalIconStyle()}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
-            </div>
-            <h2 style={styles.modalTitle}>{modal.title}</h2>
-            <p style={styles.modalText}>{modal.message}</p>
-            <button 
-              style={getModalButtonStyle()}
-              onClick={closeModal}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              OK
-            </button>
-          </div>
-        );
-      
-      case 'error':
-        return (
-          <div style={getModalStyle()}>
-            <button 
-              style={styles.modalClose}
-              onClick={closeModal}
-              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
-              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
-            >
-              ×
-            </button>
-            <div style={getModalIconStyle()}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
-            </div>
-            <h2 style={styles.modalTitle}>{modal.title}</h2>
-            <p style={styles.modalText}>{modal.message}</p>
-            <button 
-              style={getModalButtonStyle()}
-              onClick={closeModal}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              Réessayer
-            </button>
-          </div>
-        );
-      
-      case 'info':
-        return (
-          <div style={getModalStyle()}>
-            <button 
-              style={styles.modalClose}
-              onClick={closeModal}
-              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
-              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
-            >
-              ×
-            </button>
-            <div style={getModalIconStyle()}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
-            </div>
-            <h2 style={styles.modalTitle}>{modal.title}</h2>
-            <p style={styles.modalText}>{modal.message}</p>
-            
-            {modal.requiresValidation && (
-              <div style={styles.validationActions}>
-                <button 
-                  style={getModalButtonStyle()}
-                  onClick={handleContactAdmin}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "0.9";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  Contacter l'administrateur
-                </button>
-              </div>
-            )}
-            
-            {!modal.requiresValidation && (
-              <button 
-                style={getModalButtonStyle()}
-                onClick={closeModal}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                OK
-              </button>
-            )}
-          </div>
-        );
-      
-      case 'forgot':
-        return (
-          <div style={getModalStyle()}>
-            <button 
-              style={styles.modalClose}
-              onClick={closeModal}
-              onMouseEnter={(e) => e.currentTarget.style.color = "#000"}
-              onMouseLeave={(e) => e.currentTarget.style.color = "#999"}
-            >
-              ×
-            </button>
-            <div style={getModalIconStyle()}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
-            </div>
-            <h2 style={styles.modalTitle}>{modal.title}</h2>
-            <p style={styles.modalText}>{modal.message}</p>
-            
-            <form 
-              onSubmit={handleForgotPassword} 
-              style={styles.forgotPasswordForm}
-            >
-              <input
-                type="email"
-                style={styles.forgotPasswordInput}
-                placeholder="votreemail@mail.com"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#2563eb";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.15)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#cbd5e1";
-                  e.target.style.boxShadow = "none";
-                }}
-                required
-              />
-              <button 
-                type="submit" 
-                style={getModalButtonStyle()}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                Envoyer le lien
-              </button>
-            </form>
-          </div>
-        );
-      
-      default:
-        return null;
-    }
-  };
 
   return (
     <>
@@ -947,7 +939,15 @@ const Login = () => {
           onClick={closeModal}
         >
           <div onClick={(e) => e.stopPropagation()}>
-            <ModalContent />
+            <ModalContent 
+              modal={modal}
+              closeModal={closeModal}
+              forgotEmail={forgotEmail}
+              setForgotEmail={setForgotEmail}
+              handleForgotPassword={handleForgotPassword}
+              handleContactAdmin={handleContactAdmin}
+              styles={styles}
+            />
           </div>
         </div>
       )}

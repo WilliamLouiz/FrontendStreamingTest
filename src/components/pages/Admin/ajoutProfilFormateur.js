@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Navbar from '../../Navbar';
 import { useNavigate } from 'react-router-dom';
+import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
 
 const ProfilFormateur = () => {
     const navigate = useNavigate();
@@ -13,10 +14,12 @@ const ProfilFormateur = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'formateur' // Rôle fixe
+        role: 'formateur'
     });
 
-    const [showSuccess, setShowSuccess] = useState(false);
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+    const [showErrorPopup, setShowErrorPopup] = useState(false);
+    const [popupMessage, setPopupMessage] = useState('');
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
@@ -31,7 +34,6 @@ const ProfilFormateur = () => {
             [id]: value 
         }));
         
-        // Effacer l'erreur pour ce champ
         if (errors[id]) {
             setErrors(prev => ({
                 ...prev,
@@ -99,7 +101,8 @@ const ProfilFormateur = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setShowSuccess(true);
+                setPopupMessage("Formateur créé avec succès !");
+                setShowSuccessPopup(true);
                 
                 // Réinitialiser le formulaire
                 setFormData({
@@ -113,31 +116,116 @@ const ProfilFormateur = () => {
 
                 // Rediriger après 2 secondes
                 setTimeout(() => {
+                    setShowSuccessPopup(false);
                     navigate('/admin/dashboardList');
                 }, 2000);
                 
             } else {
+                let errorMessage = "Erreur lors de la création du compte";
+                
                 if (data.errors) {
                     const apiErrors = {};
                     data.errors.forEach((e) => {
                         apiErrors[e.path] = e.msg;
                     });
                     setErrors(apiErrors);
-                } else {
-                    setErrors({ server: data.message || "Erreur serveur" });
+                    errorMessage = "Veuillez corriger les erreurs du formulaire";
+                } else if (data.message) {
+                    errorMessage = data.message;
                 }
+                
+                setPopupMessage(errorMessage);
+                setShowErrorPopup(true);
             }
         } catch (err) {
-            setErrors({ server: "Impossible de se connecter au serveur" });
+            setPopupMessage("Impossible de se connecter au serveur");
+            setShowErrorPopup(true);
         } finally {
             setLoading(false);
         }
+    };
+
+    // ===============================
+    // POPUP DE SUCCÈS
+    // ===============================
+    const SuccessPopup = () => {
+        if (!showSuccessPopup) return null;
+
+        return (
+            <div className="popup-overlay">
+                <div className="validation-popup">
+                    <div className="popup-header">
+                        <h3>Succès</h3>
+                        <button className="close-popup" onClick={() => setShowSuccessPopup(false)}>
+                            <IoClose size={24} />
+                        </button>
+                    </div>
+
+                    <div className="popup-content">
+                        <div className="success-icon">
+                            <IoCheckmarkOutline size={60} color="#28a745" />
+                        </div>
+                        <p>{popupMessage}</p>
+                        <p className="popup-info">Redirection vers la liste des formateurs...</p>
+                    </div>
+
+                    <div className="popup-actions">
+                        <button className="btn-confirm" onClick={() => {
+                            setShowSuccessPopup(false);
+                            navigate('/admin/dashboardList');
+                        }}>
+                            OK
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // ===============================
+    // POPUP D'ERREUR
+    // ===============================
+    const ErrorPopup = () => {
+        if (!showErrorPopup) return null;
+
+        return (
+            <div className="popup-overlay">
+                <div className="validation-popup">
+                    <div className="popup-header">
+                        <h3>Erreur</h3>
+                        <button className="close-popup" onClick={() => setShowErrorPopup(false)}>
+                            <IoClose size={24} />
+                        </button>
+                    </div>
+
+                    <div className="popup-content">
+                        <div className="error-icon">
+                            <IoClose size={60} color="#dc3545" />
+                        </div>
+                        <p>{popupMessage}</p>
+                        <p className="error-details">
+                            Veuillez vérifier les informations saisies.
+                        </p>
+                    </div>
+
+                    <div className="popup-actions">
+                        <button className="btn-confirm" onClick={() => setShowErrorPopup(false)}>
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
         <div>
             <Navbar/>
             
+            {/* Popups */}
+            <SuccessPopup />
+            <ErrorPopup />
+
             <div style={styles.container}>
                 <button style={styles.backBtn} onClick={handleBack}>
                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#2c5f7c">
@@ -145,18 +233,6 @@ const ProfilFormateur = () => {
                     </svg>
                     Retour
                 </button>
-
-                {showSuccess && (
-                    <div style={{...styles.successMessage, display: 'block'}}>
-                        ✓ formateur enregistré avec succès ! Redirection vers la connexion...
-                    </div>
-                )}
-
-                {errors.server && (
-                    <div style={{...styles.errorMessage, display: 'block'}}>
-                        {errors.server}
-                    </div>
-                )}
 
                 <div style={styles.profileHeader}>
                     <div style={styles.profileTitle}>
@@ -296,10 +372,13 @@ const ProfilFormateur = () => {
                             disabled={loading}
                         >
                             {loading ? (
-                                <span>Enregistrement...</span>
+                                <>
+                                    <span className="spinner"></span>
+                                    <span>Enregistrement...</span>
+                                </>
                             ) : (
                                 <>
-                                    <span>CRÉER COMPTE formateur</span>
+                                    <span>CRÉER COMPTE FORMATEUR</span>
                                     <span style={styles.arrows}>»</span>
                                 </>
                             )}
@@ -307,6 +386,200 @@ const ProfilFormateur = () => {
                     </div>
                 </form>
             </div>
+
+            {/* Styles CSS pour les popups */}
+            <style jsx="true">{`
+                .popup-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                    backdrop-filter: blur(3px);
+                    animation: fadeIn 0.3s ease-out;
+                }
+                
+                .validation-popup {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 30px;
+                    width: 90%;
+                    max-width: 450px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                    animation: popupAppear 0.3s ease-out;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                }
+                
+                .popup-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 15px;
+                }
+                
+                .popup-header h3 {
+                    margin: 0;
+                    color: #333;
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                }
+                
+                .close-popup {
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 5px;
+                    border-radius: 50%;
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .close-popup:hover {
+                    background-color: #f5f5f5;
+                    color: #333;
+                    transform: rotate(90deg);
+                }
+                
+                .popup-content {
+                    text-align: center;
+                    padding: 20px 0;
+                    min-height: 150px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }
+                
+                .success-icon {
+                    color: #28a745;
+                    margin-bottom: 20px;
+                    animation: pulse 1.5s infinite;
+                }
+                
+                .error-icon {
+                    color: #dc3545;
+                    margin-bottom: 20px;
+                    animation: pulse 1.5s infinite;
+                }
+                
+                .popup-content p {
+                    color: #555;
+                    font-size: 1.1rem;
+                    line-height: 1.6;
+                    margin: 10px 0;
+                    word-break: break-word;
+                    max-width: 100%;
+                }
+                
+                .popup-info {
+                    color: #6c757d !important;
+                    font-size: 0.9rem !important;
+                    font-style: italic;
+                    margin-top: 10px !important;
+                }
+                
+                .error-details {
+                    color: #721c24;
+                    background-color: #f8d7da;
+                    border: 1px solid #f5c6cb;
+                    padding: 10px;
+                    border-radius: 6px;
+                    margin-top: 10px;
+                    font-size: 0.9rem;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                .popup-actions {
+                    display: flex;
+                    justify-content: center;
+                    gap: 15px;
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                }
+                
+                .btn-confirm {
+                    padding: 12px 25px;
+                    background-color: #007bff;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    min-width: 100px;
+                }
+                
+                .btn-confirm:hover {
+                    background-color: #0056b3;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+                }
+                
+                .spinner {
+                    display: inline-block;
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 50%;
+                    border-top-color: white;
+                    animation: spin 1s ease-in-out infinite;
+                    margin-right: 8px;
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                
+                @keyframes popupAppear {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.6; }
+                }
+                
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+                
+                @media (max-width: 600px) {
+                    .validation-popup {
+                        padding: 20px;
+                        margin: 20px;
+                        width: calc(100% - 40px);
+                    }
+                    
+                    .popup-header h3 {
+                        font-size: 1.3rem;
+                    }
+                    
+                    .popup-content p {
+                        font-size: 1rem;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
@@ -334,7 +607,11 @@ const styles = {
         fontSize: '14px',
         fontWeight: '500',
         marginBottom: '30px',
-        transition: 'all 0.3s'
+        transition: 'all 0.3s',
+        ':hover': {
+            background: '#2c5f7c',
+            color: 'white'
+        }
     },
     profileHeader: {
         display: 'flex',
@@ -352,15 +629,14 @@ const styles = {
         fontSize: '28px',
         fontWeight: 'bold'
     },
-    // Nouveau style pour les rangées de formulaire
     formRow: {
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr', // Deux colonnes égales
+        gridTemplateColumns: '1fr 1fr',
         gap: '20px',
         marginBottom: '25px'
     },
     formFull: {
-        gridColumn: '1 / -1' // Prend toute la largeur
+        gridColumn: '1 / -1'
     },
     formGroup: {
         display: 'flex',
@@ -444,24 +720,6 @@ const styles = {
         fontSize: '22px',
         fontWeight: 'bold',
         transition: 'transform 0.3s ease'
-    },
-    successMessage: {
-        padding: '15px 20px',
-        background: '#d4edda',
-        border: '1px solid #c3e6cb',
-        borderRadius: '8px',
-        color: '#155724',
-        marginBottom: '20px',
-        animation: 'slideIn 0.3s ease'
-    },
-    errorMessage: {
-        padding: '15px 20px',
-        background: '#f8d7da',
-        border: '1px solid #f5c6cb',
-        borderRadius: '8px',
-        color: '#721c24',
-        marginBottom: '20px',
-        animation: 'slideIn 0.3s ease'
     }
 };
 

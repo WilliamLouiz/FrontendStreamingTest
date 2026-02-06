@@ -1,74 +1,121 @@
-// ProfilStagiaire.jsx
-import React, { useState } from 'react';
+// ModifProfilFormateur.jsx
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../Navbar';
-import { useNavigate } from 'react-router-dom';
 import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
 
-const ProfilStagiaire = () => {
+const ModifProfilFormateur = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const API_URL = "http://192.168.2.161:5000/api/auth/register";
-
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [originalData, setOriginalData] = useState(null);
     const [formData, setFormData] = useState({
         nom: '',
         prenom: '',
         email: '',
-        password: '',
-        confirmPassword: '',
-        role: 'stagiaire'
+        role: 'formateur',
     });
-
+    const [errors, setErrors] = useState({});
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [popupMessage, setPopupMessage] = useState('');
-    const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
+    const [popupDetails, setPopupDetails] = useState('');
 
-    const handleBack = () => {
-        window.history.back();
+    // API URL
+    const API_URL = `http://192.168.2.161:5000/api/users/${id}`;
+
+    useEffect(() => {
+        if (id) {
+            fetchFormateurData();
+        }
+    }, [id]);
+
+    const fetchFormateurData = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("token");
+            
+            const response = await fetch(API_URL, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                
+                setOriginalData(result);
+                
+                let userData;
+                
+                if (result.data) {
+                    userData = result.data;
+                } else if (result.user) {
+                    userData = result.user;
+                } else {
+                    userData = result;
+                }
+                
+                setFormData({
+                    nom: userData.nom || userData.Nom || userData.lastName || '',
+                    prenom: userData.prenom || userData.Prenom || userData.firstName || '',
+                    email: userData.email || userData.Email || userData.email_address || '',
+                    role: userData.role || userData.Role || userData.type || 'formateur',
+                });
+                
+            } else {
+                const errorText = await response.text();
+                setPopupMessage(`Erreur ${response.status} lors du chargement des données`);
+                setPopupDetails(errorText);
+                setShowErrorPopup(true);
+            }
+        } catch (error) {
+            setPopupMessage("Erreur de connexion au serveur");
+            setPopupDetails(error.message);
+            setShowErrorPopup(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleInputChange = (e) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ 
-            ...prev, 
-            [id]: value 
+        const { name, value } = e.target;
+        
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
         }));
         
-        if (errors[id]) {
+        if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
-                [id]: ''
+                [name]: ''
             }));
         }
+    };
+
+    const handleRoleChange = (role) => {
+        setFormData(prev => ({
+            ...prev,
+            role: role
+        }));
     };
 
     const validateForm = () => {
         const newErrors = {};
         
-        if (!formData.nom.trim()) {
-            newErrors.nom = 'Le nom est obligatoire';
-        }
-        
-        if (!formData.prenom.trim()) {
-            newErrors.prenom = 'Le prénom est obligatoire';
-        }
-        
+        if (!formData.nom.trim()) newErrors.nom = "Le nom est requis";
+        if (!formData.prenom.trim()) newErrors.prenom = "Le prénom est requis";
         if (!formData.email.trim()) {
-            newErrors.email = 'L\'email est obligatoire';
+            newErrors.email = "L'email est requis";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email invalide';
+            newErrors.email = "Email invalide";
         }
-        
-        if (!formData.password) {
-            newErrors.password = 'Le mot de passe est obligatoire';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
-        }
-        
-        if (!formData.confirmPassword) {
-            newErrors.confirmPassword = 'La confirmation du mot de passe est obligatoire';
-        } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+        if (!formData.role) {
+            newErrors.role = "Le rôle est requis";
         }
         
         setErrors(newErrors);
@@ -81,68 +128,65 @@ const ProfilStagiaire = () => {
         if (!validateForm()) {
             return;
         }
-        
-        setLoading(true);
-        setErrors({});
-        
+
         try {
+            setSaving(true);
+            const token = localStorage.getItem("token");
+            
+            let updateData = {
+                nom: formData.nom,
+                prenom: formData.prenom,
+                email: formData.email,
+                role: formData.role,
+            };
+
             const response = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    nom: formData.nom,
-                    prenom: formData.prenom,
-                    email: formData.email,
-                    password: formData.password,
-                    role: "stagiaire",
-                }),
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(updateData)
             });
 
-            const data = await response.json();
+            const result = await response.json();
 
             if (response.ok) {
-                setPopupMessage("Stagiaire créé avec succès !");
+                setPopupMessage("Formateur modifié avec succès !");
                 setShowSuccessPopup(true);
                 
-                // Réinitialiser le formulaire
-                setFormData({
-                    nom: '',
-                    prenom: '',
-                    email: '',
-                    password: '',
-                    confirmPassword: '',
-                    role: 'stagiaire'
-                });
-
                 // Rediriger après 2 secondes
                 setTimeout(() => {
                     setShowSuccessPopup(false);
-                    navigate('/admin/dashboardList');
+                    navigate('/formateurs');
                 }, 2000);
                 
             } else {
-                let errorMessage = "Erreur lors de la création du compte";
+                let errorMessage = "Échec de la modification";
+                let errorDetails = "";
                 
-                if (data.errors) {
-                    const apiErrors = {};
-                    data.errors.forEach((e) => {
-                        apiErrors[e.path] = e.msg;
-                    });
-                    setErrors(apiErrors);
-                    errorMessage = "Veuillez corriger les erreurs du formulaire";
-                } else if (data.message) {
-                    errorMessage = data.message;
+                if (result.message && result.message.includes("required") || result.message && result.message.includes("manquant")) {
+                    errorMessage = "Certains champs requis sont manquants";
+                    errorDetails = result.message;
+                } else if (result.message) {
+                    errorMessage = result.message;
                 }
                 
                 setPopupMessage(errorMessage);
+                setPopupDetails(errorDetails);
                 setShowErrorPopup(true);
             }
-        } catch (err) {
-            setPopupMessage("Impossible de se connecter au serveur");
+        } catch (error) {
+            setPopupMessage("Erreur de connexion lors de la modification");
+            setPopupDetails(error.message);
             setShowErrorPopup(true);
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
+    };
+
+    const handleBack = () => {
+        navigate('/formateurs');
     };
 
     // ===============================
@@ -156,7 +200,10 @@ const ProfilStagiaire = () => {
                 <div className="validation-popup">
                     <div className="popup-header">
                         <h3>Succès</h3>
-                        <button className="close-popup" onClick={() => setShowSuccessPopup(false)}>
+                        <button className="close-popup" onClick={() => {
+                            setShowSuccessPopup(false);
+                            navigate('/formateurs');
+                        }}>
                             <IoClose size={24} />
                         </button>
                     </div>
@@ -166,13 +213,13 @@ const ProfilStagiaire = () => {
                             <IoCheckmarkOutline size={60} color="#28a745" />
                         </div>
                         <p>{popupMessage}</p>
-                        <p className="popup-info">Redirection vers la liste des stagiaires...</p>
+                        <p className="popup-info">Redirection vers la liste des formateurs...</p>
                     </div>
 
                     <div className="popup-actions">
                         <button className="btn-confirm" onClick={() => {
                             setShowSuccessPopup(false);
-                            navigate('/admin/dashboardList');
+                            navigate('/formateurs');
                         }}>
                             OK
                         </button>
@@ -203,9 +250,11 @@ const ProfilStagiaire = () => {
                             <IoClose size={60} color="#dc3545" />
                         </div>
                         <p>{popupMessage}</p>
-                        <p className="error-details">
-                            Veuillez vérifier les informations saisies.
-                        </p>
+                        {popupDetails && (
+                            <p className="error-details">
+                                {popupDetails}
+                            </p>
+                        )}
                     </div>
 
                     <div className="popup-actions">
@@ -218,16 +267,32 @@ const ProfilStagiaire = () => {
         );
     };
 
+    if (loading) {
+        return (
+            <div>
+                <Navbar />
+                <div style={styles.container}>
+                    <div style={styles.loading}>
+                        <div>Chargement des données du formateur...</div>
+                        <div style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
+                            ID: {id}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
-            <Navbar/>
+            <Navbar />
             
             {/* Popups */}
             <SuccessPopup />
             <ErrorPopup />
 
             <div style={styles.container}>
-                <button style={styles.backBtn} onClick={handleBack}>
+                <button style={styles.backBtn} onClick={handleBack} disabled={saving}>
                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#2c5f7c">
                         <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
                     </svg>
@@ -239,11 +304,13 @@ const ProfilStagiaire = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" height="32px" viewBox="0 -960 960 960" width="32px" fill="#2c5f7c">
                             <path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm246-164q-59 0-99.5-40.5T340-580q0-59 40.5-99.5T480-720q59 0 99.5 40.5T620-580q0 59-40.5 99.5T480-440Zm0 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/>
                         </svg>
-                        <span>Nouveau stagiaire</span>
+                        <span>Modifier l'utilisateur</span>
+                        {saving && <span style={styles.savingText}>Enregistrement en cours...</span>}
                     </div>
                 </div>
 
                 <form id="profileForm" onSubmit={handleSubmit}>
+                                     
                     {/* Nom et Prénom sur la même ligne */}
                     <div style={styles.formRow}>
                         <div style={styles.formGroup}>
@@ -255,17 +322,16 @@ const ProfilStagiaire = () => {
                                 <input 
                                     type="text" 
                                     id="nom" 
+                                    name="nom"
+                                    style={styles.input}
+                                    placeholder="Nom"
                                     value={formData.nom}
                                     onChange={handleInputChange}
-                                    style={{ 
-                                        ...styles.input,
-                                        borderColor: errors.nom ? '#dc3545' : 'transparent'
-                                    }}
-                                    disabled={loading}
-                                    placeholder="Votre nom"
+                                    disabled={saving}
+                                    required
                                 />
                             </div>
-                            {errors.nom && <span style={styles.errorText}>{errors.nom}</span>}
+                            {errors.nom && <span style={styles.error}>{errors.nom}</span>}
                         </div>
 
                         <div style={styles.formGroup}>
@@ -277,17 +343,16 @@ const ProfilStagiaire = () => {
                                 <input 
                                     type="text" 
                                     id="prenom" 
+                                    name="prenom"
+                                    style={styles.input}
+                                    placeholder="Prénom"
                                     value={formData.prenom}
                                     onChange={handleInputChange}
-                                    style={{ 
-                                        ...styles.input,
-                                        borderColor: errors.prenom ? '#dc3545' : 'transparent'
-                                    }}
-                                    disabled={loading}
-                                    placeholder="Votre prénom"
+                                    disabled={saving}
+                                    required
                                 />
                             </div>
-                            {errors.prenom && <span style={styles.errorText}>{errors.prenom}</span>}
+                            {errors.prenom && <span style={styles.error}>{errors.prenom}</span>}
                         </div>
                     </div>
 
@@ -302,83 +367,83 @@ const ProfilStagiaire = () => {
                                 <input 
                                     type="email" 
                                     id="email" 
+                                    name="email"
+                                    style={styles.input}
+                                    placeholder="Email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    style={{ 
-                                        ...styles.input,
-                                        borderColor: errors.email ? '#dc3545' : 'transparent'
-                                    }}
-                                    disabled={loading}
-                                    placeholder="Votre email"
+                                    disabled={saving}
+                                    required
                                 />
                             </div>
-                            {errors.email && <span style={styles.errorText}>{errors.email}</span>}
+                            {errors.email && <span style={styles.error}>{errors.email}</span>}
                         </div>
                     </div>
 
-                    {/* Mot de passe et Confirmation sur la même ligne */}
+                    {/* Sélection du rôle */}
                     <div style={styles.formRow}>
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Mot de passe *</label>
-                            <div style={styles.inputWrapper}>
-                                <svg style={styles.inputIcon} xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#999">
-                                    <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/>
-                                </svg>
-                                <input 
-                                    type="password" 
-                                    id="password" 
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    style={{ 
-                                        ...styles.input,
-                                        borderColor: errors.password ? '#dc3545' : 'transparent'
+                        <div style={{...styles.formGroup, ...styles.formFull}}>
+                            <label style={styles.label}>Rôle *</label>
+                            <div style={styles.roleSelector}>
+                                <button 
+                                    type="button"
+                                    style={{
+                                        ...styles.roleBtn,
+                                        ...(formData.role === 'formateur' ? styles.roleBtnActive : styles.roleBtnInactive)
                                     }}
-                                    disabled={loading}
-                                    placeholder="Mot de passe"
-                                />
-                            </div>
-                            {errors.password && <span style={styles.errorText}>{errors.password}</span>}
-                        </div>
-
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Confirmer mot de passe *</label>
-                            <div style={styles.inputWrapper}>
-                                <svg style={styles.inputIcon} xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#999">
-                                    <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/>
-                                </svg>
-                                <input 
-                                    type="password" 
-                                    id="confirmPassword" 
-                                    value={formData.confirmPassword}
-                                    onChange={handleInputChange}
-                                    style={{ 
-                                        ...styles.input,
-                                        borderColor: errors.confirmPassword ? '#dc3545' : 'transparent'
+                                    onClick={() => handleRoleChange('formateur')}
+                                    disabled={saving}
+                                >
+                                    <svg style={styles.roleIcon} xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill={formData.role === 'formateur' ? 'white' : '#2c5f7c'}>
+                                        <path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Z"/>
+                                    </svg>
+                                    <div>
+                                        <div style={styles.roleTitle}>Formateur</div>
+                                        <div style={styles.roleDescription}>Peut créer et gérer des formations</div>
+                                    </div>
+                                </button>
+                                
+                                <button 
+                                    type="button"
+                                    style={{
+                                        ...styles.roleBtn,
+                                        ...(formData.role === 'stagiaire' ? styles.roleBtnActive : styles.roleBtnInactive)
                                     }}
-                                    disabled={loading}
-                                    placeholder="Confirmer mot de passe"
-                                />
+                                    onClick={() => handleRoleChange('stagiaire')}
+                                    disabled={saving}
+                                >
+                                    <svg style={styles.roleIcon} xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill={formData.role === 'stagiaire' ? 'white' : '#2c5f7c'}>
+                                        <path d="M280-280h400v-80q0-33-23.5-56.5T600-440H360q-33 0-56.5 23.5T280-360v80Zm200-320q33 0 56.5-23.5T560-680q0-33-23.5-56.5T480-760q-33 0-56.5 23.5T400-680q0 33 23.5 56.5T480-600ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z"/>
+                                    </svg>
+                                    <div>
+                                        <div style={styles.roleTitle}>Stagiaire</div>
+                                        <div style={styles.roleDescription}>Peut s'inscrire aux formations</div>
+                                    </div>
+                                </button>
                             </div>
-                            {errors.confirmPassword && <span style={styles.errorText}>{errors.confirmPassword}</span>}
+                            {errors.role && <span style={styles.error}>{errors.role}</span>}
                         </div>
-                    </div>
-
+                    </div>              
+                    
                     {/* Bouton d'enregistrement */}
                     <div style={styles.buttonContainer}>
                         <button 
                             type="submit" 
-                            style={styles.voirPlusBtn} 
+                            style={{
+                                ...styles.voirPlusBtn,
+                                ...(saving ? styles.disabledBtn : {})
+                            }} 
                             id="saveBtn"
-                            disabled={loading}
+                            disabled={saving}
                         >
-                            {loading ? (
+                            {saving ? (
                                 <>
                                     <span className="spinner"></span>
-                                    <span>Enregistrement...</span>
+                                    <span>ENREGISTREMENT...</span>
                                 </>
                             ) : (
                                 <>
-                                    <span>CRÉER COMPTE STAGIAIRE</span>
+                                    <span>MODIFIER L'UTILISATEUR</span>
                                     <span style={styles.arrows}>»</span>
                                 </>
                             )}
@@ -499,6 +564,10 @@ const ProfilStagiaire = () => {
                     font-size: 0.9rem;
                     width: 100%;
                     box-sizing: border-box;
+                    text-align: left;
+                    word-break: break-word;
+                    max-height: 150px;
+                    overflow-y: auto;
                 }
                 
                 .popup-actions {
@@ -578,6 +647,12 @@ const ProfilStagiaire = () => {
                     .popup-content p {
                         font-size: 1rem;
                     }
+                    
+                    .error-details {
+                        font-size: 0.8rem;
+                        padding: 8px;
+                        max-height: 120px;
+                    }
                 }
             `}</style>
         </div>
@@ -608,9 +683,13 @@ const styles = {
         fontWeight: '500',
         marginBottom: '30px',
         transition: 'all 0.3s',
-        ':hover': {
+        ':hover:not(:disabled)': {
             background: '#2c5f7c',
             color: 'white'
+        },
+        ':disabled': {
+            opacity: 0.5,
+            cursor: 'not-allowed'
         }
     },
     profileHeader: {
@@ -629,11 +708,17 @@ const styles = {
         fontSize: '28px',
         fontWeight: 'bold'
     },
+    savingText: {
+        fontSize: '14px',
+        color: '#2193b0',
+        fontWeight: 'normal',
+        marginLeft: '20px'
+    },
     formRow: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '20px',
-        marginBottom: '25px'
+        marginBottom: '30px'
     },
     formFull: {
         gridColumn: '1 / -1'
@@ -661,7 +746,7 @@ const styles = {
     input: {
         width: '100%',
         padding: '15px 15px 15px 45px',
-        border: '2px solid transparent',
+        border: '2px solid #e0e0e0',
         background: '#f5f5f5',
         borderRadius: '8px',
         fontSize: '14px',
@@ -670,14 +755,63 @@ const styles = {
         ':focus': {
             outline: 'none',
             borderColor: '#2193b0',
-            background: '#fff'
+            background: 'white'
+        },
+        ':disabled': {
+            background: '#e9ecef',
+            cursor: 'not-allowed'
         }
     },
-    errorText: {
-        color: '#dc3545',
+    roleSelector: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '20px',
+        marginTop: '10px'
+    },
+    roleBtn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        padding: '20px',
+        border: '2px solid',
+        borderRadius: '12px',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        textAlign: 'left',
+        width: '100%'
+    },
+    roleBtnActive: {
+        background: 'linear-gradient(135deg, #2193b0 0%, #2c5f7c 100%)',
+        color: 'white',
+        borderColor: '#2193b0',
+        boxShadow: '0 4px 15px rgba(33, 147, 176, 0.3)'
+    },
+    roleBtnInactive: {
+        background: 'white',
+        color: '#333',
+        borderColor: '#e0e0e0',
+        ':hover:not(:disabled)': {
+            borderColor: '#2193b0',
+            background: '#f8fdff'
+        }
+    },
+    roleIcon: {
+        flexShrink: 0
+    },
+    roleTitle: {
+        fontSize: '16px',
+        fontWeight: '600',
+        marginBottom: '4px'
+    },
+    roleDescription: {
         fontSize: '12px',
-        marginTop: '5px',
-        minHeight: '17px'
+        color: 'inherit',
+        opacity: 0.8
+    },
+    error: {
+        color: '#e74c3c',
+        fontSize: '12px',
+        marginTop: '4px'
     },
     buttonContainer: {
         display: 'flex',
@@ -705,13 +839,23 @@ const styles = {
         transition: 'all 0.3s ease',
         boxShadow: '0 4px 15px rgba(33, 147, 176, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
         textDecoration: 'none',
+        minWidth: '300px',
         ':hover:not(:disabled)': {
             transform: 'translateY(-2px)',
-            boxShadow: '0 6px 20px rgba(33, 147, 176, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+            boxShadow: '0 6px 20px rgba(33, 147, 176, 0.4)'
         },
-        ':disabled': {
-            opacity: 0.6,
-            cursor: 'not-allowed'
+        ':active': {
+            transform: 'translateY(0)'
+        }
+    },
+    disabledBtn: {
+        background: '#cccccc',
+        cursor: 'not-allowed',
+        transform: 'none',
+        boxShadow: 'none',
+        ':hover': {
+            transform: 'none',
+            boxShadow: 'none'
         }
     },
     arrows: {
@@ -720,7 +864,16 @@ const styles = {
         fontSize: '22px',
         fontWeight: 'bold',
         transition: 'transform 0.3s ease'
+    },
+    loading: {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '200px',
+        fontSize: '18px',
+        color: '#666'
     }
 };
 
-export default ProfilStagiaire;
+export default ModifProfilFormateur;

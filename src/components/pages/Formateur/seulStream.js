@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { MdOutlineEdit } from "react-icons/md";
 import { IoHeadsetOutline } from "react-icons/io5";
 import { FaExpand, FaCompress } from "react-icons/fa";
-import './styles/seulStream.css';
 
 function SeulStream() {
   const location = useLocation();
@@ -572,6 +571,513 @@ function SeulStream() {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .mission-container {
+          display: flex;
+          height: 100vh;
+          background: linear-gradient(135deg, #003249 0%, #006A9B 100%);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .main-section {
+          flex: 1;
+          padding: 40px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .video-container {
+          position: relative;
+          width: 100%;
+          height: 400px;
+          background-color: #1a202c;
+          border-radius: 12px;
+          overflow: hidden;
+          margin-bottom: 30px;
+        }
+
+        .live-badge {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background-color: #dc2626;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-size: 14px;
+          font-weight: 700;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+        }
+
+        .play-button {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 80px;
+          height: 80px;
+          background-color: #1E9D0D;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: transform 0.2s;
+          z-index: 10;
+        }
+
+        .play-button:hover {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .mission-details {
+          background-color: white;
+          border-radius: 12px;
+          padding: 30px;
+        }
+
+        .mission-details h3 {
+          color: #01628F;
+          margin-bottom: 20px;
+          font-size: 24px;
+        }
+
+        .task-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+        }
+
+        .task-table th {
+          text-align: left;
+          padding: 12px;
+          background-color: #f7fafc;
+          color: #4a5568;
+          font-weight: 600;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .task-table td {
+          padding: 16px 12px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .task-title {
+          color: #01628F;
+          font-weight: 500;
+        }
+
+        .score {
+          font-size: 24px;
+          font-weight: bold;
+          color: #BA2828;
+        }
+
+        .score-large {
+          font-size: 32px;
+          font-weight: bold;
+          color: #BA2828;
+          margin-right: 4px;
+        }
+
+        .score-max {
+          color: #BA2828;
+          font-size: 18px;
+        }
+
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 0;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .info-label {
+          font-weight: 600;
+          color: #01628F;
+        }
+
+        .info-value {
+          color: #4a5568;
+        }
+
+        .time-badge {
+          background-color: #dc2626;
+          color: white;
+          padding: 4px 12px;
+          border-radius: 4px;
+          font-size: 14px;
+          font-family: monospace;
+          font-weight: 600;
+        }
+
+        .edit-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background-color: white;
+          color: #0284c7;
+          border: 2px solid #0284c7;
+          border-radius: 4px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+          background-color: #0284c7;
+          color: white;
+        }
+
+        /* Sidebar */
+        .sidebar {
+          width: 380px;
+          background-color: white;
+          padding: 30px;
+          border-left: 1px solid #e5e7eb;
+          overflow-y: auto;
+        }
+
+        .close-btn {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          background: none;
+          border: none;
+          font-size: 24px;
+          color: #4a5568;
+          cursor: pointer;
+          padding: 4px;
+        }
+
+        .close-btn:hover {
+          color: #dc2626;
+        }
+
+        .card-header {
+          color: #01628F;
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+
+        .user-name {
+          color: #BA2828;
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 30px;
+        }
+
+        .score-display {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .toggle-switch {
+          position: relative;
+          width: 50px;
+          height: 24px;
+        }
+
+        .toggle-input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .toggle-label {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          border-radius: 24px;
+          transition: .4s;
+        }
+
+        .toggle-label:before {
+          position: absolute;
+          content: "";
+          height: 16px;
+          width: 16px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          border-radius: 50%;
+          transition: .4s;
+        }
+
+        .toggle-input:checked + .toggle-label {
+          background-color: #1E9D0D;
+        }
+
+        .toggle-input:checked + .toggle-label:before {
+          transform: translateX(26px);
+        }
+
+        .validate-btn {
+          width: 100%;
+          padding: 14px;
+          background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+          border: none;
+          color: white;
+          border-radius: 8px;
+          font-weight: bold;
+          font-size: 16px;
+          cursor: pointer;
+          margin: 20px 0;
+          transition: transform 0.2s;
+        }
+
+        .validate-btn:hover {
+          transform: translateY(-2px);
+        }
+
+        .discuss-btn {
+          width: 100%;
+          padding: 14px;
+          background-color: #1E9D0D;
+          border: none;
+          color: white;
+          border-radius: 8px;
+          font-weight: bold;
+          font-size: 16px;
+          cursor: pointer;
+          margin-bottom: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.2s;
+        }
+
+        .discuss-btn:hover {
+          background-color: #15803d;
+        }
+
+        .comments-section {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .comments-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .comments-header h4 {
+          color: #01628F;
+          margin: 0;
+        }
+
+        .comments-count {
+          color: #6b7280;
+          font-size: 14px;
+        }
+
+        .comment {
+          background-color: #f9fafb;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 12px;
+        }
+
+        .comment-author {
+          font-weight: 600;
+          color: #01628F;
+          margin-bottom: 4px;
+        }
+
+        .comment-text {
+          color: #4a5568;
+          font-size: 14px;
+        }
+
+        .comment-btn {
+          width: 100%;
+          padding: 12px;
+          background-color: white;
+          color: #0284c7;
+          border: 2px solid #0284c7;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          margin-top: 16px;
+          transition: all 0.2s;
+        }
+
+        .comment-btn:hover {
+          background-color: #0284c7;
+          color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+          .mission-container {
+            flex-direction: column;
+          }
+          
+          .sidebar {
+            width: 100%;
+            border-left: none;
+            border-top: 1px solid #e5e7eb;
+          }
+        }
+
+        /* Styles pour le mode plein écran */
+        .fullscreen-mode {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 9999;
+          background-color: #000;
+        }
+
+        .fullscreen-mode .main-section {
+          width: 100%;
+          height: 100%;
+          padding: 0;
+        }
+
+        .fullscreen-mode .video-container {
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          border-radius: 0 !important;
+        }
+
+        .fullscreen-toggle {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          background-color: rgba(0, 0, 0, 0.7);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 8px 12px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          z-index: 20;
+          transition: background-color 0.2s;
+        }
+
+        .fullscreen-toggle:hover {
+          background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        /* Styles pour le canvas en plein écran */
+        .fullscreen-mode canvas {
+          width: 100% !important;
+          height: 100% !important;
+        }
+
+        /* Cacher la sidebar et mission-details en plein écran */
+        .fullscreen-mode .sidebar,
+        .fullscreen-mode .mission-details {
+          display: none;
+        }
+
+        /* Ajustement du bouton play en plein écran */
+        .fullscreen-mode .play-button {
+          width: 100px;
+          height: 100px;
+        }
+
+        .fullscreen-mode .play-button svg {
+          width: 60px;
+          height: 60px;
+        }
+
+        /* Styles pour le live-badge en plein écran */
+        .fullscreen-mode .live-badge {
+          top: 20px;
+          left: 20px;
+          font-size: 16px;
+          padding: 10px 20px;
+          z-index: 20;
+        }
+
+        /* Overlay en plein écran */
+        .fullscreen-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.95);
+          z-index: 10000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .fullscreen-controls {
+          position: absolute;
+          bottom: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 20px;
+          z-index: 10001;
+        }
+
+        .fullscreen-control-btn {
+          background-color: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+
+        .fullscreen-control-btn:hover {
+          background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Animation pour l'entrée en plein écran */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .fullscreen-mode .video-container {
+          animation: fadeIn 0.3s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .fullscreen-toggle {
+            top: 10px;
+            right: 10px;
+            padding: 6px 10px;
+            font-size: 14px;
+          }
+          
+          .fullscreen-toggle span {
+            display: none; /* Cacher le texte sur mobile, garder l'icône */
+          }
+        }
+      `}</style>
     </div>
   );
 }

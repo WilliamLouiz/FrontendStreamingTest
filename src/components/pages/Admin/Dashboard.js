@@ -1,43 +1,519 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   RiAccountBoxLine,
-  RiDeleteBin6Line
+  RiDeleteBin6Line,
+  RiSendPlaneLine
 } from "react-icons/ri";
-import { FiUserPlus } from "react-icons/fi";
+import { FiUserPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { FaRegUser } from "react-icons/fa";
 import { ImSpinner11 } from "react-icons/im";
 import { CiEdit } from "react-icons/ci";
 import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
+import { MdOutlineDelete } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
 
 import Navbar from "../../Navbar";
 import "./styles/UserValidation.css";
 
-function TrainerManagement() {
+// ===============================
+// COMPOSANTS POPUP SÉPARÉS POUR ÉVITER LES RE-RENDERS
+// ===============================
 
+const DeleteConfirmationPopup = memo(({
+  showDeletePopup,
+  trainerToDelete,
+  isDeleting,
+  deleteSuccess,
+  closeDeletePopup,
+  handleDelete
+}) => {
+  if (!showDeletePopup) return null;
+
+  return (
+    <div className="popup-overlay" onClick={closeDeletePopup}>
+      <div className="delete-popup" onClick={(e) => e.stopPropagation()}>
+        <div className="popup-header">
+          <h3>Confirmer la suppression</h3>
+          {!deleteSuccess && (
+            <button className="close-popup" onClick={closeDeletePopup}>
+              <IoClose size={24} />
+            </button>
+          )}
+        </div>
+
+        <div className="popup-content">
+          {deleteSuccess ? (
+            <>
+              <div className="success-icon">
+                <IoCheckmarkOutline size={60} color="#28a745" />
+              </div>
+              <p>Utilisateur supprimé avec succès !</p>
+            </>
+          ) : (
+            <>
+              <div className="delete-icon">
+                <MdOutlineDelete size={60} />
+              </div>
+              <p>
+                Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{trainerToDelete?.name}</strong> ?
+              </p>
+              <p className="warning-text">
+                ⚠️ Cette action est irréversible. Toutes les données associées à cet utilisateur seront définitivement perdues.
+              </p>
+            </>
+          )}
+        </div>
+
+        {!deleteSuccess && (
+          <div className="popup-actions">
+            <button className="btn-cancel" onClick={closeDeletePopup} disabled={isDeleting}>
+              Annuler
+            </button>
+            <button
+              className="btn-confirm-delete"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <span className="spinner"></span>
+                  Suppression...
+                </>
+              ) : (
+                "Supprimer définitivement"
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+const ValidationPopup = memo(({
+  showValidationPopup,
+  validationResult,
+  setShowValidationPopup,
+  confirmValidateAccount
+}) => {
+  if (!showValidationPopup) return null;
+
+  const isConfirmation = validationResult.isConfirmation;
+  const isSuccess = validationResult.success;
+  const isResetPassword = validationResult.resetPassword;
+
+  return (
+    <div className="popup-overlay" onClick={() => setShowValidationPopup(false)}>
+      <div className="validation-popup" onClick={(e) => e.stopPropagation()}>
+        <div className="popup-header">
+          <h3>
+            {isConfirmation ? "Confirmation" : 
+             isSuccess ? "Succès" : "Erreur"}
+          </h3>
+          <button className="close-popup" onClick={() => setShowValidationPopup(false)}>
+            <IoClose size={24} />
+          </button>
+        </div>
+
+        <div className="popup-content">
+          <div className={`popup-icon ${isSuccess ? "success" : isConfirmation ? "warning" : "error"}`}>
+            {isConfirmation ? (
+              <span style={{ fontSize: "48px" }}>❓</span>
+            ) : isSuccess ? (
+              <IoCheckmarkOutline size={60} color="#28a745" />
+            ) : (
+              <IoClose size={60} color="#dc3545" />
+            )}
+          </div>
+          
+          <p>{validationResult.message}</p>
+          
+          {isSuccess && validationResult.emailSent !== undefined && (
+            <p className="email-info">
+              Email envoyé: <strong>{validationResult.emailSent ? "Oui" : "Non"}</strong>
+            </p>
+          )}
+        </div>
+
+        <div className="popup-actions">
+          {isConfirmation ? (
+            <>
+              <button className="btn-cancel" onClick={() => setShowValidationPopup(false)}>
+                Annuler
+              </button>
+              <button
+                className={`btn-confirm ${isResetPassword ? "btn-warning" : "btn-success"}`}
+                onClick={() => {
+                  if (isResetPassword) {
+                    alert("Email de réinitialisation envoyé");
+                    setShowValidationPopup(false);
+                  } else {
+                    confirmValidateAccount();
+                    setShowValidationPopup(false);
+                  }
+                }}
+              >
+                {isResetPassword ? "Envoyer l'email" : "Confirmer"}
+              </button>
+            </>
+          ) : (
+            <button className="btn-confirm" onClick={() => setShowValidationPopup(false)}>
+              OK
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const RejectPopup = memo(({
+  showRejectPopup,
+  selectedTrainer,
+  rejectReason,
+  rejectEmailOption,
+  isRejecting,
+  rejectSuccess,
+  rejectResult,
+  setShowRejectPopup,
+  setRejectReason,
+  setRejectEmailOption,
+  setValidationResult,
+  setShowValidationPopup,
+  handleRejectAccount,
+  confirmRejectAccount
+}) => {
+  const rejectTextareaRef = useRef(null);
+  const rejectPopupRef = useRef(null);
+  const [localReason, setLocalReason] = useState(rejectReason);
+  const [localEmailOption, setLocalEmailOption] = useState(rejectEmailOption);
+
+  // Focus sur le textarea quand le popup s'ouvre
+  useEffect(() => {
+    if (showRejectPopup && rejectTextareaRef.current && !rejectResult.isConfirmation && !rejectSuccess) {
+      const timer = setTimeout(() => {
+        if (rejectTextareaRef.current) {
+          rejectTextareaRef.current.focus();
+          rejectTextareaRef.current.setSelectionRange(
+            rejectTextareaRef.current.value.length,
+            rejectTextareaRef.current.value.length
+          );
+        }
+      }, 10);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showRejectPopup, rejectResult.isConfirmation, rejectSuccess]);
+
+  // Synchroniser avec le parent quand on ferme
+  useEffect(() => {
+    if (!showRejectPopup) {
+      setRejectReason(localReason);
+      setRejectEmailOption(localEmailOption);
+    }
+  }, [showRejectPopup, localReason, localEmailOption, setRejectReason, setRejectEmailOption]);
+
+  const handleTextareaKeyDown = useCallback((e) => {
+    if (e.ctrlKey && e.key === 'Enter' && localReason.trim()) {
+      handleRejectAccount(localReason, localEmailOption);
+    }
+  }, [localReason, localEmailOption, handleRejectAccount]);
+
+  const handleCancelClick = useCallback(() => {
+    if (localReason.trim() !== "") {
+      if (window.confirm("Voulez-vous vraiment annuler ? Les modifications seront perdues.")) {
+        setShowRejectPopup(false);
+      }
+    } else {
+      setShowRejectPopup(false);
+    }
+  }, [localReason, setShowRejectPopup]);
+
+  const handleSendClick = useCallback(() => {
+    if (!localReason.trim()) {
+      setValidationResult({
+        success: false,
+        message: "Veuillez saisir la raison du refus",
+        emailSent: false,
+        isConfirmation: false
+      });
+      setShowValidationPopup(true);
+      return;
+    }
+    handleRejectAccount(localReason, localEmailOption);
+  }, [localReason, localEmailOption, handleRejectAccount, setValidationResult, setShowValidationPopup]);
+
+  const handleCloseClick = useCallback(() => {
+    if (localReason.trim() !== "" && !rejectResult.isConfirmation && !rejectSuccess) {
+      if (window.confirm("Voulez-vous vraiment annuler ? Les modifications seront perdues.")) {
+        setShowRejectPopup(false);
+      }
+    } else {
+      setShowRejectPopup(false);
+    }
+  }, [localReason, rejectResult.isConfirmation, rejectSuccess, setShowRejectPopup]);
+
+  if (!showRejectPopup) return null;
+
+  const isConfirmation = rejectResult.isConfirmation;
+  const isSuccess = rejectSuccess;
+
+  return (
+    <div className="popup-overlay">
+      <div className="reject-popup" ref={rejectPopupRef}>
+        <div className="popup-header">
+          <h3>
+            {isConfirmation ? "Confirmer le refus" : 
+             isSuccess ? "Succès" : "Refuser le compte"}
+          </h3>
+          {!isSuccess && (
+            <button 
+              className="close-popup" 
+              onClick={handleCloseClick}
+            >
+              <IoClose size={24} />
+            </button>
+          )}
+        </div>
+
+        <div className="popup-content">
+          {isSuccess ? (
+            <>
+              <div className="success-icon">
+                <IoCheckmarkOutline size={60} color="#28a745" />
+              </div>
+              <p>{rejectResult.message}</p>
+              {rejectResult.emailSent !== undefined && (
+                <p className="email-info">
+                  Email envoyé: <strong>{rejectResult.emailSent ? "Oui" : "Non"}</strong>
+                </p>
+              )}
+            </>
+          ) : isConfirmation ? (
+            <>
+              <div className="warning-icon">
+                <span style={{ fontSize: "48px" }}>⚠️</span>
+              </div>
+              <p>{rejectResult.message}</p>
+            </>
+          ) : (
+            <div className="reject-form-container">
+              <p className="reject-instruction">
+                Veuillez saisir la raison du refus pour <strong>{selectedTrainer?.name}</strong> :
+              </p>
+              
+              <div className="reject-textarea-container">
+                <textarea
+                  ref={rejectTextareaRef}
+                  className="reject-textarea"
+                  value={localReason}
+                  onChange={(e) => setLocalReason(e.target.value)}
+                  placeholder="Saisissez la raison du refus ici..."
+                  rows="4"
+                  onKeyDown={handleTextareaKeyDown}
+                />
+                
+                <div className="reject-options">
+                  <div className="send-email-option">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={localEmailOption === "true"}
+                        onChange={(e) => setLocalEmailOption(e.target.checked ? "true" : "false")}
+                      />
+                      <span>Envoyer un email de notification</span>
+                    </label>
+                  </div>
+                  <div className="shortcut-hint">
+                    Ctrl+Enter pour envoyer
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="popup-actions">
+          {isSuccess ? (
+            <button className="btn-confirm" onClick={() => setShowRejectPopup(false)}>
+              OK
+            </button>
+          ) : isConfirmation ? (
+            <>
+              <button className="btn-cancel" onClick={() => setShowRejectPopup(false)}>
+                Annuler
+              </button>
+              <button
+                className="btn-confirm-delete"
+                onClick={() => confirmRejectAccount(localReason, localEmailOption)}
+                disabled={isRejecting}
+              >
+                {isRejecting ? (
+                  <>
+                    <span className="spinner"></span>
+                    Traitement...
+                  </>
+                ) : (
+                  "Confirmer le refus"
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                className="btn-cancel" 
+                onClick={handleCancelClick}
+              >
+                Annuler
+              </button>
+              <button
+                className="btn-send-reject-action"
+                onClick={handleSendClick}
+                disabled={!localReason.trim() || isRejecting}
+              >
+                {isRejecting ? (
+                  <>
+                    <span className="spinner"></span>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <RiSendPlaneLine size={20} />
+                    <span>Envoyer le refus</span>
+                  </>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const Pagination = memo(({ 
+  trainers, 
+  usersPerPage, 
+  currentPage, 
+  totalPages, 
+  handlePrevPage, 
+  handleNextPage, 
+  handlePageClick 
+}) => {
+  if (trainers.length <= usersPerPage) return null;
+
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
+  const visiblePages = pageNumbers.filter(num => {
+    return num === 1 || 
+           num === totalPages || 
+           (num >= currentPage - 1 && num <= currentPage + 1);
+  });
+
+  return (
+    <div className="pagination-container">
+      <button
+        className="pagination-btn prev"
+        onClick={handlePrevPage}
+        disabled={currentPage === 1}
+      >
+        <FiChevronLeft size={20} />
+        <span>Précédent</span>
+      </button>
+      
+      <div className="page-numbers">
+        {visiblePages.map((number, index) => {
+          if (index > 0 && number > visiblePages[index - 1] + 1) {
+            return (
+              <React.Fragment key={`ellipsis-${number}`}>
+                <span className="ellipsis">...</span>
+                <button
+                  className={`page-number ${currentPage === number ? "active" : ""}`}
+                  onClick={() => handlePageClick(number)}
+                >
+                  {number}
+                </button>
+              </React.Fragment>
+            );
+          }
+          
+          return (
+            <button
+              key={number}
+              className={`page-number ${currentPage === number ? "active" : ""}`}
+              onClick={() => handlePageClick(number)}
+            >
+              {number}
+            </button>
+          );
+        })}
+      </div>
+      
+      <button
+        className="pagination-btn next"
+        onClick={handleNextPage}
+        disabled={currentPage === totalPages}
+      >
+        <span>Suivant</span>
+        <FiChevronRight size={20} />
+      </button>
+    </div>
+  );
+});
+
+// ===============================
+// COMPOSANT PRINCIPAL
+// ===============================
+
+function UserValidation() {
   const API_URL = "http://192.168.2.161:5000/api/users/stagiaires";
   const DELETE_URL = "http://192.168.2.161:5000/api/users/";
   const VALIDATE_API_URL = "http://192.168.2.161:5000/api/admin/users";
 
+  // États
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
-  const [profileStatus, setProfileStatus] = useState(true);
+  const [selectedTrainerId, setSelectedTrainerId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectEmailOption, setRejectEmailOption] = useState("true");
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [trainerToDelete, setTrainerToDelete] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [showValidationPopup, setShowValidationPopup] = useState(false);
+  const [validationResult, setValidationResult] = useState({ 
+    success: false, 
+    message: "", 
+    emailSent: false 
+  });
+  const [showRejectPopup, setShowRejectPopup] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectSuccess, setRejectSuccess] = useState(false);
+  const [rejectResult, setRejectResult] = useState({ 
+    success: false, 
+    message: "", 
+    emailSent: false 
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(6);
+  const [totalPages, setTotalPages] = useState(1);
+  
   const navigate = useNavigate();
-  const [rejectReason, setRejectReason] = useState("");
-  const [showRejectForm, setShowRejectForm] = useState(false);
-  const [rejectEmailOption, setRejectEmailOption] = useState("true");
 
   // ===============================
-  // LOAD USERS (JWT PROTECTED)
+  // USEEFFECT
   // ===============================
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // ===============================
+  // FONCTIONS PRINCIPALES
+  // ===============================
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -58,10 +534,10 @@ function TrainerManagement() {
         console.error("401 - Unauthorized");
         setTrainers([]);
         setSelectedTrainer(null);
+        setSelectedTrainerId(null);
         return;
       }
 
-      // ✅ Support: [] OR { users: [] }
       const users = Array.isArray(result)
         ? result
         : result.users || [];
@@ -73,32 +549,71 @@ function TrainerManagement() {
         login: user.login,
         stagiaire_id: user.stagiaire_id || user.stagiaiaire_id || "",
         status: user.status === "active" ? "active" : "inactive",
-        selected: false,
-        // Récupérer le statut de validation depuis l'API
-        is_validated: user.is_validated || false, // ou validated selon la réponse de l'API
+        is_validated: user.is_validated || false,
         validated: user.validated || false
       }));
 
       setTrainers(formattedUsers);
-      setSelectedTrainer(formattedUsers[0] || null);
+      
+      const totalPages = Math.ceil(formattedUsers.length / usersPerPage);
+      setTotalPages(totalPages || 1);
+      
+      if (formattedUsers.length > 0) {
+        const firstUser = formattedUsers[0];
+        setSelectedTrainer(firstUser);
+        setSelectedTrainerId(firstUser.id);
+      }
 
     } catch (error) {
       console.error("Erreur chargement utilisateurs :", error);
       setTrainers([]);
+      setSelectedTrainer(null);
+      setSelectedTrainerId(null);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
   // ===============================
-  // VALIDER UN COMPTE
+  // FONCTIONS DE GESTION
   // ===============================
-  const handleValidateAccount = async () => {
-    if (!selectedTrainer) return;
+  const getCurrentPageUsers = useCallback(() => {
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return trainers.slice(startIndex, endIndex);
+  }, [trainers, currentPage, usersPerPage]);
 
-    if (!window.confirm(`Valider le compte de ${selectedTrainer.name} ?`)) {
-      return;
+  const handlePrevPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
+  }, [currentPage]);
+
+  const handleNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  }, [currentPage, totalPages]);
+
+  const handlePageClick = useCallback((pageNumber) => {
+    setCurrentPage(pageNumber);
+  }, []);
+
+  const handleValidateAccount = useCallback(() => {
+    if (!selectedTrainer) return;
+    
+    setValidationResult({
+      success: false,
+      message: `Êtes-vous sûr de vouloir valider le compte de ${selectedTrainer.name} ?`,
+      emailSent: false,
+      isConfirmation: true
+    });
+    setShowValidationPopup(true);
+  }, [selectedTrainer]);
+
+  const confirmValidateAccount = async () => {
+    if (!selectedTrainer) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -116,9 +631,13 @@ function TrainerManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        alert(`Compte validé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
+        setValidationResult({
+          success: true,
+          message: `Compte validé avec succès !`,
+          emailSent: result.email_sent || false,
+          isConfirmation: false
+        });
 
-        // Mettre à jour le statut dans la liste
         setTrainers(prev =>
           prev.map(trainer =>
             trainer.id === selectedTrainer.id
@@ -127,35 +646,59 @@ function TrainerManagement() {
           )
         );
 
-        // Mettre à jour le trainer sélectionné
         setSelectedTrainer(prev =>
           prev ? { ...prev, is_validated: true, validated: true, status: "active" } : prev
         );
-
-        setProfileStatus(true);
       } else {
-        alert(`Erreur: ${result.message || "Échec de la validation"}`);
+        setValidationResult({
+          success: false,
+          message: `Erreur: ${result.message || "Échec de la validation"}`,
+          emailSent: false,
+          isConfirmation: false
+        });
       }
     } catch (error) {
       console.error("Erreur validation:", error);
-      alert("Erreur lors de la validation du compte");
+      setValidationResult({
+        success: false,
+        message: "Erreur lors de la validation du compte",
+        emailSent: false,
+        isConfirmation: false
+      });
     }
   };
 
-  // ===============================
-  // REFUSER UN COMPTE
-  // ===============================
-  const handleRejectAccount = async () => {
+  const openRejectPopup = useCallback(() => {
     if (!selectedTrainer) return;
+    setShowRejectPopup(true);
+  }, [selectedTrainer]);
 
-    if (!rejectReason.trim()) {
-      alert("Veuillez saisir la raison du refus");
+  const handleRejectAccount = useCallback((reason, emailOption) => {
+    if (!selectedTrainer || !reason.trim()) {
+      setValidationResult({
+        success: false,
+        message: "Veuillez saisir la raison du refus",
+        emailSent: false,
+        isConfirmation: false
+      });
+      setShowValidationPopup(true);
       return;
     }
 
-    if (!window.confirm(`Refuser le compte de ${selectedTrainer.name} ?`)) {
-      return;
-    }
+    setRejectResult({
+      success: false,
+      message: `Êtes-vous sûr de vouloir refuser le compte de ${selectedTrainer.name} ?`,
+      emailSent: false,
+      isConfirmation: true
+    });
+    setRejectReason(reason);
+    setRejectEmailOption(emailOption);
+  }, [selectedTrainer]);
+
+  const confirmRejectAccount = async (reason, emailOption) => {
+    if (!selectedTrainer || !reason.trim()) return;
+
+    setIsRejecting(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -168,8 +711,8 @@ function TrainerManagement() {
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
-            reason: rejectReason,
-            sendEmail: rejectEmailOption === "true"
+            reason: reason,
+            sendEmail: emailOption === "true"
           })
         }
       );
@@ -177,9 +720,14 @@ function TrainerManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        alert(`Compte refusé avec succès !\nEmail envoyé: ${result.email_sent ? "Oui" : "Non"}`);
+        setRejectSuccess(true);
+        setRejectResult({
+          success: true,
+          message: `Compte refusé avec succès !`,
+          emailSent: result.email_sent || false,
+          isConfirmation: false
+        });
 
-        // Mettre à jour le statut dans la liste
         setTrainers(prev =>
           prev.map(trainer =>
             trainer.id === selectedTrainer.id
@@ -188,72 +736,57 @@ function TrainerManagement() {
           )
         );
 
-        // Mettre à jour le trainer sélectionné
         setSelectedTrainer(prev =>
           prev ? { ...prev, is_validated: false, validated: false, status: "inactive" } : prev
         );
 
-        setProfileStatus(false);
-        setShowRejectForm(false);
-        setRejectReason("");
+        setTimeout(() => {
+          setShowRejectPopup(false);
+          setIsRejecting(false);
+          setRejectSuccess(false);
+        }, 2000);
       } else {
-        alert(`Erreur: ${result.message || "Échec du refus"}`);
+        setRejectResult({
+          success: false,
+          message: `Erreur: ${result.message || "Échec du refus"}`,
+          emailSent: false,
+          isConfirmation: false
+        });
+        setIsRejecting(false);
       }
     } catch (error) {
       console.error("Erreur refus:", error);
-      alert("Erreur lors du refus du compte");
+      setRejectResult({
+        success: false,
+        message: "Erreur lors du refus du compte",
+        emailSent: false,
+        isConfirmation: false
+      });
+      setIsRejecting(false);
     }
   };
 
-  // ===============================
-  // EVENTS
-  // ===============================
-  const handleCheckboxChange = (id) => {
-    setTrainers(prev =>
-      prev.map(t =>
-        t.id === id ? { ...t, selected: !t.selected } : t
-      )
-    );
-  };
-
-  const handleRowClick = (id, e) => {
-    if (
-      e.target.closest(".btn-action") ||
-      e.target.type === "checkbox"
-    ) return;
-
-    const trainer = trainers.find(t => t.id === id);
-    setSelectedTrainer(trainer);
-    setProfileStatus(trainer.status === "active");
-    // Réinitialiser le formulaire de refus lors du changement d'utilisateur
-    setShowRejectForm(false);
-    setRejectReason("");
-  };
-
-  const handleAddTrainer = (e) => {
-    e.stopPropagation();
-    navigate(`/stagiaire/ajouter`);
-  };
-
-  const handleEdit = (id, e) => {
-    e.stopPropagation();
-    navigate(`/stagiaire/modifier/${id}`);
-  };
-
-  const handleDeleteClick = (id, e) => {
+  const openDeletePopup = useCallback((id, e) => {
     e.stopPropagation();
     const trainer = trainers.find(t => t.id === id);
     setTrainerToDelete(trainer);
     setShowDeletePopup(true);
-  };
+  }, [trainers]);
 
-  const confirmDelete = async () => {
+  const closeDeletePopup = useCallback(() => {
+    setShowDeletePopup(false);
+    setTrainerToDelete(null);
+    setIsDeleting(false);
+    setDeleteSuccess(false);
+  }, []);
+
+  const handleDelete = async () => {
     if (!trainerToDelete) return;
 
-    try {
-      setDeleting(true);
-      const token = localStorage.getItem("token");
+    setIsDeleting(true);
 
+    try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${DELETE_URL}${trainerToDelete.id}`, {
         method: "DELETE",
         headers: {
@@ -261,106 +794,107 @@ function TrainerManagement() {
         }
       });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression");
+      if (response.ok) {
+        setTrainers(prev => prev.filter(t => t.id !== trainerToDelete.id));
+        
+        const updatedTrainers = trainers.filter(t => t.id !== trainerToDelete.id);
+        const newTotalPages = Math.ceil(updatedTrainers.length / usersPerPage);
+        setTotalPages(newTotalPages || 1);
+        
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
+        }
+        
+        if (selectedTrainer && selectedTrainer.id === trainerToDelete.id) {
+          setSelectedTrainer(null);
+          setSelectedTrainerId(null);
+          
+          if (updatedTrainers.length > 0) {
+            const newPageUsers = getCurrentPageUsers();
+            if (newPageUsers.length > 0) {
+              setSelectedTrainer(newPageUsers[0]);
+              setSelectedTrainerId(newPageUsers[0].id);
+            } else if (currentPage > 1) {
+              setCurrentPage(currentPage - 1);
+            }
+          }
+        }
+        
+        setDeleteSuccess(true);
+        
+        setTimeout(() => {
+          closeDeletePopup();
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        setValidationResult({
+          success: false,
+          message: `Erreur lors de la suppression: ${errorData.message || "Erreur inconnue"}`,
+          emailSent: false,
+          isConfirmation: false
+        });
+        setShowValidationPopup(true);
+        setIsDeleting(false);
       }
-
-      // Supprimer de la liste
-      setTrainers(prev => prev.filter(t => t.id !== trainerToDelete.id));
-
-      // Si l'utilisateur supprimé est celui sélectionné, désélectionner
-      if (selectedTrainer && selectedTrainer.id === trainerToDelete.id) {
-        setSelectedTrainer(null);
-      }
-
-      // Fermer la popup
-      setShowDeletePopup(false);
-      setTrainerToDelete(null);
-
     } catch (error) {
-      alert("Erreur lors de la suppression : " + error.message);
-    } finally {
-      setDeleting(false);
+      console.error("Erreur lors de la suppression:", error);
+      setValidationResult({
+        success: false,
+        message: "Erreur de connexion lors de la suppression",
+        emailSent: false,
+        isConfirmation: false
+      });
+      setShowValidationPopup(true);
+      setIsDeleting(false);
     }
   };
 
-  const cancelDelete = () => {
-    setShowDeletePopup(false);
-    setTrainerToDelete(null);
-  };
+  const handleCheckboxChange = useCallback((id, e) => {
+    e.stopPropagation();
+    
+    if (e.target.checked) {
+      const trainer = trainers.find(t => t.id === id);
+      if (trainer) {
+        setSelectedTrainer(trainer);
+        setSelectedTrainerId(id);
+      }
+    }
+  }, [trainers]);
 
-  const handleResetPassword = () => {
+  const handleRowClick = useCallback((id, e) => {
+    if (e.target.closest(".btn-action") || e.target.type === "checkbox") {
+      return;
+    }
+
+    const trainer = trainers.find(t => t.id === id);
+    if (trainer) {
+      setSelectedTrainer(trainer);
+      setSelectedTrainerId(id);
+    }
+  }, [trainers]);
+
+  const handleAddTrainer = useCallback((e) => {
+    e.stopPropagation();
+    navigate(`/stagiaire/ajouter`);
+  }, [navigate]);
+
+  const handleEdit = useCallback((id, e) => {
+    e.stopPropagation();
+    navigate(`/stagiaire/modifier/${id}`);
+  }, [navigate]);
+
+  const handleResetPassword = useCallback(() => {
     if (!selectedTrainer) return;
 
-    if (window.confirm(
-      `Réinitialiser le mot de passe de ${selectedTrainer.name} ?`
-    )) {
-      alert("Email de réinitialisation envoyé");
-    }
-  };
-
-  const handleViewMore = () => {
-    if (selectedTrainer) {
-      navigate(`/stagiaire/details/${selectedTrainer.id}`);
-    }
-  };
-
-  // ===============================
-  // RENDER DELETE POPUP
-  // ===============================
-  const renderDeletePopup = () => {
-    if (!showDeletePopup || !trainerToDelete) return null;
-
-    return (
-      <div className="popup-overlay">
-        <div className="delete-popup">
-          <div className="popup-header">
-            <h3>Confirmer la suppression</h3>
-            <button className="close-popup" onClick={cancelDelete}>
-              <IoClose size={24} />
-            </button>
-          </div>
-
-          <div className="popup-content">
-            <div className="delete-icon">
-              <RiDeleteBin6Line size={60} color="#ff4757" />
-            </div>
-
-            <p>Êtes-vous sûr de vouloir supprimer l'utilisateur :</p>
-            <p><strong>{trainerToDelete.name}</strong> ?</p>
-
-            <p className="warning-text">
-              Cette action est irréversible. Toutes les données associées à cet utilisateur seront perdues.
-            </p>
-          </div>
-
-          <div className="popup-actions">
-            <button
-              className="btn-cancel"
-              onClick={cancelDelete}
-              disabled={deleting}
-            >
-              Annuler
-            </button>
-            <button
-              className="btn-confirm-delete"
-              onClick={confirmDelete}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <span className="spinner"></span>
-                  Suppression...
-                </>
-              ) : (
-                "Confirmer la suppression"
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+    setValidationResult({
+      success: false,
+      message: `Réinitialiser le mot de passe de ${selectedTrainer.name} ?`,
+      emailSent: false,
+      isConfirmation: true,
+      resetPassword: true
+    });
+    setShowValidationPopup(true);
+  }, [selectedTrainer]);
 
   // ===============================
   // RENDER
@@ -368,12 +902,42 @@ function TrainerManagement() {
   return (
     <div className="mainContainer">
       <Navbar />
+      
+      <DeleteConfirmationPopup
+        showDeletePopup={showDeletePopup}
+        trainerToDelete={trainerToDelete}
+        isDeleting={isDeleting}
+        deleteSuccess={deleteSuccess}
+        closeDeletePopup={closeDeletePopup}
+        handleDelete={handleDelete}
+      />
+      
+      <ValidationPopup
+        showValidationPopup={showValidationPopup}
+        validationResult={validationResult}
+        setShowValidationPopup={setShowValidationPopup}
+        confirmValidateAccount={confirmValidateAccount}
+      />
+      
+      <RejectPopup
+        showRejectPopup={showRejectPopup}
+        selectedTrainer={selectedTrainer}
+        rejectReason={rejectReason}
+        rejectEmailOption={rejectEmailOption}
+        isRejecting={isRejecting}
+        rejectSuccess={rejectSuccess}
+        rejectResult={rejectResult}
+        setShowRejectPopup={setShowRejectPopup}
+        setRejectReason={setRejectReason}
+        setRejectEmailOption={setRejectEmailOption}
+        setValidationResult={setValidationResult}
+        setShowValidationPopup={setShowValidationPopup}
+        handleRejectAccount={handleRejectAccount}
+        confirmRejectAccount={confirmRejectAccount}
+      />
 
       <div className="contentContainer">
-
-        {/* ================= LIST ================= */}
         <div className="card">
-
           <div className="card-header">
             <div className="card-title">
               <RiAccountBoxLine size={40} />
@@ -388,37 +952,35 @@ function TrainerManagement() {
           <div className="table-header">
             <div></div>
             <div>Utilisateur</div>
-            <div>Stagiaire id</div>
+            <div>Identifiant</div>
             <div>Validé</div>
-            <div>Action</div>
+            <div style={{ justifyContent: "flex-start", marginLeft: "-10px" }}>Action</div>
           </div>
 
-          {/* LOADING */}
           {loading && (
             <div className="empty-message">
               Chargement des utilisateurs...
             </div>
           )}
 
-          {/* EMPTY */}
           {!loading && trainers.length === 0 && (
             <div className="empty-message">
               Aucun utilisateur disponible
             </div>
           )}
 
-          {/* USERS */}
-          {!loading && trainers.length > 0 && trainers.map(trainer => (
+          {!loading && trainers.length > 0 && getCurrentPageUsers().map(trainer => (
             <div
               key={trainer.id}
-              className={`trainer-row ${trainer.selected ? "selected" : ""}`}
+              className={`trainer-row ${selectedTrainerId === trainer.id ? "selected" : ""}`}
               onClick={(e) => handleRowClick(trainer.id, e)}
             >
               <input
                 type="checkbox"
                 className="checkbox"
-                checked={trainer.selected}
-                onChange={() => handleCheckboxChange(trainer.id)}
+                checked={selectedTrainerId === trainer.id}
+                onChange={(e) => handleCheckboxChange(trainer.id, e)}
+                onClick={(e) => e.stopPropagation()}
               />
 
               <div className="trainer-name">
@@ -426,7 +988,6 @@ function TrainerManagement() {
                 <span>{trainer.name}</span>
               </div>
 
-              {/* Cellule pour l'ID stagiaire */}
               <div className="stagiaire-id-cell">
                 {trainer.stagiaire_id || "N/A"}
               </div>
@@ -453,7 +1014,7 @@ function TrainerManagement() {
 
                 <button
                   className="btn-action btn-delete"
-                  onClick={(e) => handleDeleteClick(trainer.id, e)}
+                  onClick={(e) => openDeletePopup(trainer.id, e)}
                 >
                   <RiDeleteBin6Line size={22} color="#fff" />
                 </button>
@@ -461,11 +1022,20 @@ function TrainerManagement() {
             </div>
           ))}
 
+          {trainers.length > usersPerPage && (
+            <Pagination
+              trainers={trainers}
+              usersPerPage={usersPerPage}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              handlePrevPage={handlePrevPage}
+              handleNextPage={handleNextPage}
+              handlePageClick={handlePageClick}
+            />
+          )}
         </div>
 
-        {/* ================= PROFILE ================= */}
         <div className="card profile-card">
-
           {selectedTrainer ? (
             <>
               <div className="profile-title">FICHE UTILISATEUR</div>
@@ -491,7 +1061,6 @@ function TrainerManagement() {
                 />
               </div>
 
-              {/* Ajout de l'ID stagiaire dans le profil */}
               <div className="form-group">
                 <label className="form-label">Stagiaire ID</label>
                 <input
@@ -509,17 +1078,15 @@ function TrainerManagement() {
                 </button>
               </div>
 
-              {/* SECTION VALIDATION - Affichée uniquement si le compte n'est pas validé */}
               {!selectedTrainer.is_validated && (
                 <div className="validation-section">
                   <div className="validation-info">
-                    <span className="validation-alert"></span>
+                    <span className="validation-alert">⚠️</span>
                     <span className="validation-text">
                       Ce compte n'est pas encore validé. Veuillez approuver ou refuser l'accès.
                     </span>
                   </div>
 
-                  {/* BADGES BOUTONS VALIDER/REFUSER */}
                   <div className="validation-buttons-container">
                     <button
                       className="btn-validate"
@@ -530,86 +1097,24 @@ function TrainerManagement() {
 
                     <button
                       className="btn-reject"
-                      onClick={() => setShowRejectForm(!showRejectForm)}
+                      onClick={openRejectPopup}
                     >
                       REFUSER LE COMPTE
                     </button>
                   </div>
-
-                  {/* FORMULAIRE DE RAISON DE REFUS */}
-                  {showRejectForm && (
-                    <div className="reject-form">
-                      <div className="form-group">
-                        <label className="form-label">Raison du refus *</label>
-                        <textarea
-                          className="form-textarea"
-                          value={rejectReason}
-                          onChange={(e) => setRejectReason(e.target.value)}
-                          placeholder="Veuillez saisir la raison du refus..."
-                          rows="4"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Envoyer un email ?</label>
-                        <div className="radio-group">
-                          <label className="radio-label">
-                            <input
-                              type="radio"
-                              name="sendEmail"
-                              value="true"
-                              checked={rejectEmailOption === "true"}
-                              onChange={(e) => setRejectEmailOption(e.target.value)}
-                            />
-                            Oui
-                          </label>
-                          <label className="radio-label">
-                            <input
-                              type="radio"
-                              name="sendEmail"
-                              value="false"
-                              checked={rejectEmailOption === "false"}
-                              onChange={(e) => setRejectEmailOption(e.target.value)}
-                            />
-                            Non
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="reject-form-actions">
-                        <button
-                          className="btn-submit-reject"
-                          onClick={handleRejectAccount}
-                          disabled={!rejectReason.trim()}
-                        >
-                          CONFIRMER LE REFUS
-                        </button>
-                        <button
-                          className="btn-cancel-reject"
-                          onClick={() => {
-                            setShowRejectForm(false);
-                            setRejectReason("");
-                          }}
-                        >
-                          ANNULER
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Afficher un message si le compte est déjà validé */}
               {selectedTrainer.is_validated && (
                 <div className="validation-status-message validated">
-                  <span className="status-icon-check"></span>
+                  <span className="status-icon-check">✅</span>
                   <span className="status-text">
                     Ce compte a été validé et est actif.
                   </span>
                 </div>
               )}
 
-              <button className="voir-plus-btn" onClick={handleViewMore}>
+              <button className="voir-plus-btn" onClick={(e) => handleEdit(selectedTrainer.id, e)}>
                 <span>VOIR PLUS</span>
                 <span className="arrows">»</span>
               </button>
@@ -619,14 +1124,10 @@ function TrainerManagement() {
               Sélectionnez un utilisateur
             </div>
           )}
-
         </div>
       </div>
-
-      {/* DELETE CONFIRMATION POPUP */}
-      {renderDeletePopup()}
     </div>
   );
 }
 
-export default TrainerManagement;
+export default memo(UserValidation);

@@ -3,6 +3,7 @@ import { FiUserPlus } from "react-icons/fi";
 import { FaRegUser } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
+import { IoClose, IoCheckmarkOutline } from "react-icons/io5";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -20,7 +21,10 @@ const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupDetails, setPopupDetails] = useState("");
 
   // Styles
   const styles = {
@@ -258,22 +262,6 @@ const Register = () => {
       marginTop: "5px",
       display: "block",
     },
-    successMessage: {
-      background: "#4CAF50",
-      color: "white",
-      padding: "10px 15px",
-      borderRadius: "8px",
-      marginBottom: "20px",
-      textAlign: "center",
-    },
-    errorMessage: {
-      background: "#ff4444",
-      color: "white",
-      padding: "10px 15px",
-      borderRadius: "8px",
-      marginBottom: "20px",
-      textAlign: "center",
-    },
     arrows: {
       display: "flex",
       gap: "3px",
@@ -337,7 +325,6 @@ const Register = () => {
 
     setLoading(true);
     setErrors({});
-    setSuccess("");
 
     try {
       const response = await fetch(API_URL, {
@@ -355,8 +342,11 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess("Compte créé avec succès 🎉");
+        setPopupMessage("Compte créé avec succès ! 🎉");
+        setPopupDetails("Redirection vers la page de connexion...");
+        setShowSuccessPopup(true);
 
+        // Réinitialiser le formulaire
         setFormData({
           nom: "",
           prenom: "",
@@ -366,37 +356,127 @@ const Register = () => {
           role: "stagiaire",
         });
 
-        setTimeout(() => navigate("/login"), 2000);
+        // Redirection après 2 secondes
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          navigate("/login");
+        }, 2000);
       } else {
+        let errorMessage = "Erreur lors de la création du compte";
+        let errorDetails = "";
+        
         if (data.errors) {
           const apiErrors = {};
           data.errors.forEach((e) => {
             apiErrors[e.path] = e.msg;
           });
           setErrors(apiErrors);
-        } else {
-          setErrors({ server: data.message || "Erreur serveur" });
+          errorMessage = "Veuillez corriger les erreurs du formulaire";
+        } else if (data.message) {
+          errorMessage = data.message;
         }
+        
+        setPopupMessage(errorMessage);
+        setPopupDetails(errorDetails);
+        setShowErrorPopup(true);
       }
     } catch (err) {
-      setErrors({ server: "Impossible de se connecter au serveur" });
+      setPopupMessage("Impossible de se connecter au serveur");
+      setPopupDetails("Vérifiez votre connexion internet et réessayez.");
+      setShowErrorPopup(true);
     } finally {
       setLoading(false);
     }
   };
 
-  // Helper function for pseudo-elements
-  const PseudoElement = ({ type, style }) => {
-    return <div style={{
-      position: 'absolute',
-      content: '""',
-      ...style
-    }} />;
+  // ===============================
+  // POPUP DE SUCCÈS
+  // ===============================
+  const SuccessPopup = () => {
+    if (!showSuccessPopup) return null;
+
+    return (
+      <div className="popup-overlay">
+        <div className="validation-popup">
+          <div className="popup-header">
+            <h3>Succès</h3>
+            <button className="close-popup" onClick={() => {
+              setShowSuccessPopup(false);
+              navigate("/login");
+            }}>
+              <IoClose size={24} />
+            </button>
+          </div>
+
+          <div className="popup-content">
+            <div className="success-icon">
+              <IoCheckmarkOutline size={60} color="#28a745" />
+            </div>
+            <p>{popupMessage}</p>
+            {popupDetails && <p className="popup-details">{popupDetails}</p>}
+            <p className="popup-info">
+              Bienvenue {formData.prenom} {formData.nom} !
+            </p>
+          </div>
+
+          <div className="popup-actions">
+            <button className="btn-confirm" onClick={() => {
+              setShowSuccessPopup(false);
+              navigate("/login");
+            }}>
+              Se connecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ===============================
+  // POPUP D'ERREUR
+  // ===============================
+  const ErrorPopup = () => {
+    if (!showErrorPopup) return null;
+
+    return (
+      <div className="popup-overlay">
+        <div className="validation-popup">
+          <div className="popup-header">
+            <h3>Erreur</h3>
+            <button className="close-popup" onClick={() => setShowErrorPopup(false)}>
+              <IoClose size={24} />
+            </button>
+          </div>
+
+          <div className="popup-content">
+            <div className="error-icon">
+              <IoClose size={60} color="#dc3545" />
+            </div>
+            <p>{popupMessage}</p>
+            {popupDetails && (
+              <p className="error-details">
+                {popupDetails}
+              </p>
+            )}
+          </div>
+
+          <div className="popup-actions">
+            <button className="btn-confirm" onClick={() => setShowErrorPopup(false)}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // ================= UI =================
   return (
     <div style={styles.body}>
+      {/* Popups */}
+      <SuccessPopup />
+      <ErrorPopup />
+
       <div style={styles.container}>
         <div style={styles.header}>
           <div style={styles.icon}>
@@ -404,9 +484,6 @@ const Register = () => {
           </div>
           <h1 style={styles.h1}>Créer mon compte</h1>
         </div>
-
-        {success && <div style={styles.successMessage}>{success}</div>}
-        {errors.server && <div style={styles.errorMessage}>{errors.server}</div>}
 
         <form onSubmit={handleSubmit}>
           {/* NOM */}
@@ -610,11 +687,220 @@ const Register = () => {
               }}
               disabled={loading}
             >
-              {loading ? "CHARGEMENT..." : "CRÉER COMPTE »"}
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  <span>CRÉATION EN COURS...</span>
+                </>
+              ) : (
+                "CRÉER COMPTE »"
+              )}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Styles CSS pour les popups */}
+      <style jsx="true">{`
+        .popup-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+          backdrop-filter: blur(3px);
+          animation: fadeIn 0.3s ease-out;
+        }
+        
+        .validation-popup {
+          background: white;
+          border-radius: 12px;
+          padding: 30px;
+          width: 90%;
+          max-width: 450px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+          animation: popupAppear 0.3s ease-out;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+        
+        .popup-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 15px;
+        }
+        
+        .popup-header h3 {
+          margin: 0;
+          color: #333;
+          font-size: 1.5rem;
+          font-weight: 600;
+        }
+        
+        .close-popup {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #666;
+          padding: 5px;
+          border-radius: 50%;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .close-popup:hover {
+          background-color: #f5f5f5;
+          color: #333;
+          transform: rotate(90deg);
+        }
+        
+        .popup-content {
+          text-align: center;
+          padding: 20px 0;
+          min-height: 150px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+        
+        .success-icon {
+          color: #28a745;
+          margin-bottom: 20px;
+          animation: pulse 1.5s infinite;
+        }
+        
+        .error-icon {
+          color: #dc3545;
+          margin-bottom: 20px;
+          animation: pulse 1.5s infinite;
+        }
+        
+        .popup-content p {
+          color: #555;
+          font-size: 1.1rem;
+          line-height: 1.6;
+          margin: 10px 0;
+          word-break: break-word;
+          max-width: 100%;
+        }
+        
+        .popup-details {
+          color: #28a745 !important;
+          font-size: 0.95rem !important;
+          margin-top: 5px !important;
+        }
+        
+        .popup-info {
+          color: #6c757d !important;
+          font-size: 0.9rem !important;
+          font-style: italic;
+          margin-top: 10px !important;
+        }
+        
+        .error-details {
+          color: #721c24;
+          background-color: #f8d7da;
+          border: 1px solid #f5c6cb;
+          padding: 10px;
+          border-radius: 6px;
+          margin-top: 10px;
+          font-size: 0.9rem;
+          width: 100%;
+          box-sizing: border-box;
+          text-align: left;
+          word-break: break-word;
+        }
+        
+        .popup-actions {
+          display: flex;
+          justify-content: center;
+          gap: 15px;
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #eee;
+        }
+        
+        .btn-confirm {
+          padding: 12px 25px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          min-width: 100px;
+        }
+        
+        .btn-confirm:hover {
+          background-color: #0056b3;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        
+        .spinner {
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top-color: white;
+          animation: spin 1s ease-in-out infinite;
+          margin-right: 8px;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes popupAppear {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 600px) {
+          .validation-popup {
+            padding: 20px;
+            margin: 20px;
+            width: calc(100% - 40px);
+          }
+          
+          .popup-header h3 {
+            font-size: 1.3rem;
+          }
+          
+          .popup-content p {
+            font-size: 1rem;
+          }
+        }
+      `}</style>
     </div>
   );
 };
